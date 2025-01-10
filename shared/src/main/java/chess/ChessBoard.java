@@ -1,4 +1,9 @@
 package chess;
+import chess.ChessGame.TeamColor;
+import chess.ChessPiece.PieceType;
+
+import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * A chessboard that can hold and rearrange chess pieces.
@@ -8,10 +13,10 @@ package chess;
  */
 public class ChessBoard {
 
-    private final ChessPiece[][] squares = new ChessPiece[8][8];
+    private ChessPiece[][] squares;
 
     public ChessBoard() {
-        
+        this.squares = new ChessPiece[8][8];
     }
 
     @Override
@@ -54,6 +59,60 @@ public class ChessBoard {
      * (How the game of chess normally starts)
      */
     public void resetBoard() {
-        throw new RuntimeException("Not implemented");
+        this.squares = new ChessPiece[8][8];
+
+        for (int row = 1; row <= 8; row++){
+            switch (row) {
+                case 1:
+                    this.setRow(row, TeamColor.WHITE);
+                    break;
+                case 2:
+                    this.setPawns(row, TeamColor.WHITE);
+                    break;
+                case 7:
+                    this.setPawns(row, TeamColor.BLACK);
+                    break;
+                case 8:
+                    this.setRow(row, TeamColor.BLACK);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    /**
+     * Sets the row of the board specified with the correct pieces
+     * @param row The row of the board to put pieces
+     * @param color The color of the pieces to set
+     */
+    private void setRow(int row, TeamColor color) {
+        for (int col = 1; col<=8; col++) {
+            switch (col) {
+                case 1, 8:
+                    this.addPiece(new ChessPosition(row, col), new ChessPiece(color, PieceType.ROOK));
+                    break;
+                case 2, 7:
+                    this.addPiece(new ChessPosition(row, col), new ChessPiece(color, PieceType.KNIGHT));
+                    break;
+                case 3, 6:
+                    this.addPiece(new ChessPosition(row, col), new ChessPiece(color, PieceType.BISHOP));
+                    break;
+                case 4:
+                    this.addPiece(new ChessPosition(row, col), new ChessPiece(color, PieceType.QUEEN));
+                    break;
+                case 5:
+                    this.addPiece(new ChessPosition(row, col), new ChessPiece(color, PieceType.KING));
+                    break;
+                default:
+                    throw new RuntimeException("ChessBoard.setRow case fault");
+            }
+        }
+    }
+
+    private void setPawns(int row, TeamColor color) {
+        for (int col = 1; col <= 8; col++) {
+            this.addPiece(new ChessPosition(row, col), new ChessPiece(color, PieceType.PAWN));
+        }
     }
 }
