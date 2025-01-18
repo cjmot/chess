@@ -73,7 +73,7 @@ public class ChessPiece {
 //            case BISHOP -> new BishopMovesCalculator().pieceMoves(board, myPosition);
 //            case KNIGHT -> new KnightMovesCalculator().pieceMoves(board, myPosition);
 //            case ROOK -> new RookMovesCalculator().pieceMoves(board, myPosition);
-//            case PAWN -> new PawnMovesCalculator().pieceMoves(board, myPosition);
+            case PAWN -> new PawnMovesCalculator().pieceMoves(board, myPosition, this.pieceColor);
             default -> throw new RuntimeException("ChessPiece.pieceMoves case should not happen");
         };
     }

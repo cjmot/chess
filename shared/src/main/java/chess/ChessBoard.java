@@ -110,6 +110,11 @@ public class ChessBoard {
         }
     }
 
+    /**
+     * Sets the pawns on the board
+     * @param row The row of the board to put the pawns
+     * @param color The color of the pawns to set
+     */
     private void setPawns(int row, TeamColor color) {
         for (int col = 1; col <= 8; col++) {
             this.addPiece(new ChessPosition(row, col), new ChessPiece(color, PieceType.PAWN));

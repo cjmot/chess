@@ -4,11 +4,15 @@ import java.util.Collection;
 import java.util.List;
 import java.util.ArrayList;
 
+/**
+ * Interface outline for each class of PieceMovesCalculator
+ */
 public interface PieceMovesCalculator {
 
     Collection<ChessMove> pieceMoves(
             ChessBoard board, ChessPosition myPosition, ChessGame.TeamColor currColor
     );
+
     default Boolean isNotBlocked(
             ChessBoard board,
             ChessPosition position,
@@ -25,6 +29,10 @@ public interface PieceMovesCalculator {
     }
 }
 
+
+/**
+ * Calculates the moves available for the King piece
+ */
 class KingMovesCalculator implements PieceMovesCalculator {
     @Override
     public Collection<ChessMove> pieceMoves(
@@ -45,6 +53,7 @@ class KingMovesCalculator implements PieceMovesCalculator {
         return moves;
     }
 
+
     private static Collection<ChessPosition> getKingPositions(int currRow, int currCol) {
         final ChessPosition up = new ChessPosition(currRow, currCol + 1);
         final ChessPosition down = new ChessPosition(currRow, currCol - 1);
@@ -59,6 +68,9 @@ class KingMovesCalculator implements PieceMovesCalculator {
     }
 }
 
+/**
+ * Calculates the moves available for the Queen piece
+ */
 class QueenMovesCalculator implements PieceMovesCalculator {
     @Override
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition, ChessGame.TeamColor currColor) {
@@ -66,6 +78,9 @@ class QueenMovesCalculator implements PieceMovesCalculator {
     }
 }
 
+/**
+ * Calculates the moves available for the Bishop piece
+ */
 class BishopMovesCalculator implements PieceMovesCalculator {
     @Override
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition, ChessGame.TeamColor currColor) {
@@ -73,6 +88,9 @@ class BishopMovesCalculator implements PieceMovesCalculator {
     }
 }
 
+/**
+ * Calculates the moves available for the Knight piece
+ */
 class KnightMovesCalculator implements PieceMovesCalculator {
     @Override
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition, ChessGame.TeamColor currColor) {
@@ -80,6 +98,9 @@ class KnightMovesCalculator implements PieceMovesCalculator {
     }
 }
 
+/**
+ * Calculates the moves available for the Rook piece
+ */
 class RookMovesCalculator implements PieceMovesCalculator {
     @Override
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition, ChessGame.TeamColor currColor) {
@@ -87,6 +108,9 @@ class RookMovesCalculator implements PieceMovesCalculator {
     }
 }
 
+/**
+ * Calculates the moves available for the Pawn piece
+ */
 class PawnMovesCalculator implements PieceMovesCalculator {
     @Override
     public Collection<ChessMove> pieceMoves(
@@ -99,7 +123,14 @@ class PawnMovesCalculator implements PieceMovesCalculator {
         } else return getBlackPawnMoves(board, myPosition, currColor);
     }
 
-
+    /**
+     * Gets the possible moves for a white pawn.
+     *
+     * @param board the current state of the chessboard
+     * @param myPosition the current position of the pawn
+     * @param currColor the color of the pawn
+     * @return a collection of possible moves
+     */
     private Collection<ChessMove> getWhitePawnMoves(
             ChessBoard board,
             ChessPosition myPosition,
@@ -115,7 +146,14 @@ class PawnMovesCalculator implements PieceMovesCalculator {
         return new ArrayList<>(getMoves(board, myPosition, currColor, positions));
     }
 
-
+    /**
+     * Gets the possible moves for a black pawn.
+     *
+     * @param board the current state of the chessboard
+     * @param myPosition the current position of the pawn
+     * @param currColor the color of the pawn
+     * @return a collection of possible moves
+     */
     private Collection<ChessMove> getBlackPawnMoves(
             ChessBoard board,
             ChessPosition myPosition,
@@ -131,7 +169,15 @@ class PawnMovesCalculator implements PieceMovesCalculator {
         return new ArrayList<>(getMoves(board, myPosition, currColor, positions));
     }
 
-
+    /**
+     * Gets the possible moves for a pawn.
+     *
+     * @param board the current state of the chessboard
+     * @param myPosition the current position of the pawn
+     * @param currColor the color of the pawn
+     * @param positions the possible positions the pawn can move to
+     * @return a collection of possible moves
+     */
     private Collection<ChessMove> getMoves(
             ChessBoard board,
             ChessPosition myPosition,
@@ -170,6 +216,13 @@ class PawnMovesCalculator implements PieceMovesCalculator {
         return moves;
     }
 
+    /**
+     * Gets the possible promotion moves for a pawn.
+     *
+     * @param myPosition the current position of the pawn
+     * @param newPosition the new position of the pawn
+     * @return a collection of possible promotion moves
+     */
     private Collection<ChessMove> getPromotions(ChessPosition myPosition, ChessPosition newPosition) {
         return List.of(
                 new ChessMove(myPosition, newPosition, ChessPiece.PieceType.QUEEN),
@@ -179,6 +232,15 @@ class PawnMovesCalculator implements PieceMovesCalculator {
         );
     }
 
+    /**
+     * Gets the possible diagonal moves for a pawn.
+     *
+     * @param board the current state of the chessboard
+     * @param myPosition the current position of the pawn
+     * @param currColor the color of the pawn
+     * @param diagonal the diagonal position to check
+     * @return a collection of possible diagonal moves
+     */
     private Collection<ChessMove> getDiagonals(
             ChessBoard board,
             ChessPosition myPosition,
