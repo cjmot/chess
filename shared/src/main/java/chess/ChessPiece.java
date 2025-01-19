@@ -74,7 +74,6 @@ public class ChessPiece {
             case KNIGHT -> new KnightMovesCalculator().pieceMoves(board, myPosition, this.pieceColor);
             case ROOK -> new RookMovesCalculator().pieceMoves(board, myPosition, this.pieceColor );
             case PAWN -> new PawnMovesCalculator().pieceMoves(board, myPosition, this.pieceColor);
-            default -> throw new RuntimeException("ChessPiece.pieceMoves case should not happen");
         };
     }
 }

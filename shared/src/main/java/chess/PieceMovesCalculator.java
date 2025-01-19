@@ -13,7 +13,15 @@ public interface PieceMovesCalculator {
             ChessBoard board, ChessPosition myPosition, ChessGame.TeamColor currColor
     );
 
-    default Boolean isNotBlocked(
+    /**
+     * Determines if a piece can move to a given position.
+     * @param board the current state of the chessboard
+     * @param position the position to check
+     * @param currColor the color of the piece
+     * @param canCapture whether the piece can capture another piece
+     * @return boolean indicating if the piece can move to the position
+     */
+    default boolean isNotBlocked(
             ChessBoard board,
             ChessPosition position,
             ChessGame.TeamColor currColor,
@@ -26,6 +34,41 @@ public interface PieceMovesCalculator {
         } else if (board.getPiece(position) == null) {
             return true;
         } else return board.getPiece(position).getTeamColor() != currColor && canCapture;
+    }
+
+    /**
+     * Gets the possible moves for a Rook or Bishop in a given direction.
+     *
+     * @param board the current state of the chessboard
+     * @param myPosition the current position of the piece
+     * @param currColor the color of the piece
+     * @param rowIncrement the row increment for the direction
+     * @param colIncrement the column increment for the direction
+     * @return a collection of possible moves
+     */
+    default Collection<ChessMove> getRookAndBishopMoves(
+            ChessBoard board,
+            ChessPosition myPosition,
+            ChessGame.TeamColor currColor,
+            int rowIncrement,
+            int colIncrement
+    ) {
+        Collection<ChessMove> moves = new ArrayList<>();
+        ChessPosition newPosition = new ChessPosition(
+                myPosition.getRow() + rowIncrement, myPosition.getColumn() + colIncrement
+        );
+        while (isNotBlocked(board, newPosition, currColor, true)) {
+            if (board.getPiece(newPosition) != null && board.getPiece(newPosition).getTeamColor() != currColor) {
+                moves.add(new ChessMove(myPosition, newPosition, null));
+                break;
+            }
+            moves.add(new ChessMove(myPosition, newPosition, null));
+            newPosition = new ChessPosition(
+                    newPosition.getRow() + rowIncrement,
+                    newPosition.getColumn() + colIncrement
+            );
+        }
+        return moves;
     }
 }
 
@@ -46,14 +89,19 @@ class KingMovesCalculator implements PieceMovesCalculator {
 
         final Collection<ChessPosition> positions = getKingPositions(currRow, currCol);
         for (ChessPosition newPosition : positions) {
-            if (Boolean.TRUE.equals(isNotBlocked(board, newPosition, currColor, true))) {
+            if (isNotBlocked(board, newPosition, currColor, true)) {
                 moves.add(new ChessMove(myPosition, newPosition, null));
             }
         }
         return moves;
     }
 
-
+    /**
+     * Gets the possible positions for a King to move to.
+     * @param currRow the current row of the King
+     * @param currCol the current column of the King
+     * @return a list of positions the King can move to
+     */
     private static Collection<ChessPosition> getKingPositions(int currRow, int currCol) {
         final ChessPosition up = new ChessPosition(currRow, currCol + 1);
         final ChessPosition down = new ChessPosition(currRow, currCol - 1);
@@ -95,39 +143,14 @@ class BishopMovesCalculator implements PieceMovesCalculator {
         Collection<ChessMove> moves = new ArrayList<>();
 
         // up right diagonal moves
-        moves.addAll(getDiagonalMoves(board, myPosition, currColor, 1, 1));
+        moves.addAll(getRookAndBishopMoves(board, myPosition, currColor, 1, 1));
         // up left diagonal moves
-        moves.addAll(getDiagonalMoves(board, myPosition, currColor, 1, -1));
+        moves.addAll(getRookAndBishopMoves(board, myPosition, currColor, 1, -1));
         // down right diagonal moves
-        moves.addAll(getDiagonalMoves(board, myPosition, currColor, -1, 1));
+        moves.addAll(getRookAndBishopMoves(board, myPosition, currColor, -1, 1));
         // down left diagonal moves
-        moves.addAll(getDiagonalMoves(board, myPosition, currColor, -1, -1));
+        moves.addAll(getRookAndBishopMoves(board, myPosition, currColor, -1, -1));
 
-        return moves;
-    }
-
-    private Collection<ChessMove> getDiagonalMoves(
-            ChessBoard board,
-            ChessPosition myPosition,
-            ChessGame.TeamColor currColor,
-            int rowIncrement,
-            int colIncrement
-    ) {
-        Collection<ChessMove> moves = new ArrayList<>();
-        ChessPosition newPosition = new ChessPosition(
-                myPosition.getRow() + rowIncrement, myPosition.getColumn() + colIncrement
-        );
-        while (isNotBlocked(board, newPosition, currColor, true)) {
-            if (board.getPiece(newPosition) != null && board.getPiece(newPosition).getTeamColor() != currColor) {
-                moves.add(new ChessMove(myPosition, newPosition, null));
-                break;
-            }
-            moves.add(new ChessMove(myPosition, newPosition, null));
-            newPosition = new ChessPosition(
-                    newPosition.getRow() + rowIncrement,
-                    newPosition.getColumn() + colIncrement
-            );
-        }
         return moves;
     }
 }
@@ -173,39 +196,14 @@ class RookMovesCalculator implements PieceMovesCalculator {
         Collection<ChessMove> moves = new ArrayList<>();
 
         // up moves
-        moves.addAll(getMoves(board, myPosition, currColor, 1, 0));
+        moves.addAll(getRookAndBishopMoves(board, myPosition, currColor, 1, 0));
         // right moves
-        moves.addAll(getMoves(board, myPosition, currColor, 0, 1));
+        moves.addAll(getRookAndBishopMoves(board, myPosition, currColor, 0, 1));
         // down moves
-        moves.addAll(getMoves(board, myPosition, currColor, -1, 0));
+        moves.addAll(getRookAndBishopMoves(board, myPosition, currColor, -1, 0));
         // left moves
-        moves.addAll(getMoves(board, myPosition, currColor, 0, -1));
+        moves.addAll(getRookAndBishopMoves(board, myPosition, currColor, 0, -1));
 
-        return moves;
-    }
-
-    private Collection<ChessMove> getMoves(
-            ChessBoard board,
-            ChessPosition myPosition,
-            ChessGame.TeamColor currColor,
-            int rowIncrement,
-            int colIncrement
-    ) {
-        Collection<ChessMove> moves = new ArrayList<>();
-        ChessPosition newPosition = new ChessPosition(
-                myPosition.getRow() + rowIncrement, myPosition.getColumn() + colIncrement
-        );
-        while (isNotBlocked(board, newPosition, currColor, true)) {
-            if (board.getPiece(newPosition) != null && board.getPiece(newPosition).getTeamColor() != currColor) {
-                moves.add(new ChessMove(myPosition, newPosition, null));
-                break;
-            }
-            moves.add(new ChessMove(myPosition, newPosition, null));
-            newPosition = new ChessPosition(
-                    newPosition.getRow() + rowIncrement,
-                    newPosition.getColumn() + colIncrement
-            );
-        }
         return moves;
     }
 }
