@@ -68,19 +68,19 @@ class KingMovesCalculator implements PieceMovesCalculator {
     }
 }
 
-///**
-// * Calculates the moves available for the Queen piece
-// */
-//class QueenMovesCalculator implements PieceMovesCalculator {
-//    @Override
-//    public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition, ChessGame.TeamColor currColor) {
-//        Collection<ChessMove> moves = new ArrayList<>();
-//        moves.addAll(new RookMovesCalculator().pieceMoves(board, myPosition, currColor));
-//        moves.addAll(new BishopMovesCalculator().pieceMoves(board, myPosition, currColor));
-//
-//        return moves;
-//    }
-//}
+/**
+ * Calculates the moves available for the Queen piece
+ */
+class QueenMovesCalculator implements PieceMovesCalculator {
+    @Override
+    public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition, ChessGame.TeamColor currColor) {
+        Collection<ChessMove> moves = new ArrayList<>();
+        moves.addAll(new RookMovesCalculator().pieceMoves(board, myPosition, currColor));
+        moves.addAll(new BishopMovesCalculator().pieceMoves(board, myPosition, currColor));
+
+        return moves;
+    }
+}
 
 /**
  * Calculates the moves available for the Bishop piece
