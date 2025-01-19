@@ -138,7 +138,25 @@ class BishopMovesCalculator implements PieceMovesCalculator {
 class KnightMovesCalculator implements PieceMovesCalculator {
     @Override
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition, ChessGame.TeamColor currColor) {
-        throw new RuntimeException("Not implemented");
+        Collection<ChessMove> moves = new ArrayList<>();
+
+        ChessPosition[] knightPositions = {
+                new ChessPosition(myPosition.getRow() + 2, myPosition.getColumn() + 1),
+                new ChessPosition(myPosition.getRow() + 1, myPosition.getColumn() + 2),
+                new ChessPosition(myPosition.getRow() - 1, myPosition.getColumn() + 2),
+                new ChessPosition(myPosition.getRow() - 2, myPosition.getColumn() + 1),
+                new ChessPosition(myPosition.getRow() - 2, myPosition.getColumn() - 1),
+                new ChessPosition(myPosition.getRow() - 1, myPosition.getColumn() - 2),
+                new ChessPosition(myPosition.getRow() + 1, myPosition.getColumn() - 2),
+                new ChessPosition(myPosition.getRow() + 2, myPosition.getColumn() - 1)
+        };
+
+        for (ChessPosition position : knightPositions) {
+            if (isNotBlocked(board, position, currColor, true)) {
+                moves.add(new ChessMove(myPosition, position, null));
+            }
+        }
+        return moves;
     }
 }
 
