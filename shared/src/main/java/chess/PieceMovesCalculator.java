@@ -68,23 +68,67 @@ class KingMovesCalculator implements PieceMovesCalculator {
     }
 }
 
-/**
- * Calculates the moves available for the Queen piece
- */
-class QueenMovesCalculator implements PieceMovesCalculator {
-    @Override
-    public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition, ChessGame.TeamColor currColor) {
-        throw new RuntimeException("Not implemented");
-    }
-}
+///**
+// * Calculates the moves available for the Queen piece
+// */
+//class QueenMovesCalculator implements PieceMovesCalculator {
+//    @Override
+//    public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition, ChessGame.TeamColor currColor) {
+//        Collection<ChessMove> moves = new ArrayList<>();
+//        moves.addAll(new RookMovesCalculator().pieceMoves(board, myPosition, currColor));
+//        moves.addAll(new BishopMovesCalculator().pieceMoves(board, myPosition, currColor));
+//
+//        return moves;
+//    }
+//}
 
 /**
  * Calculates the moves available for the Bishop piece
  */
 class BishopMovesCalculator implements PieceMovesCalculator {
     @Override
-    public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition, ChessGame.TeamColor currColor) {
-        throw new RuntimeException("Not implemented");
+    public Collection<ChessMove> pieceMoves(
+            ChessBoard board,
+            ChessPosition myPosition,
+            ChessGame.TeamColor currColor
+    ) {
+        Collection<ChessMove> moves = new ArrayList<>();
+
+        // up right diagonal moves
+        moves.addAll(getDiagonalMoves(board, myPosition, currColor, 1, 1));
+        // up left diagonal moves
+        moves.addAll(getDiagonalMoves(board, myPosition, currColor, 1, -1));
+        // down right diagonal moves
+        moves.addAll(getDiagonalMoves(board, myPosition, currColor, -1, 1));
+        // down left diagonal moves
+        moves.addAll(getDiagonalMoves(board, myPosition, currColor, -1, -1));
+
+        return moves;
+    }
+
+    private Collection<ChessMove> getDiagonalMoves(
+            ChessBoard board,
+            ChessPosition myPosition,
+            ChessGame.TeamColor currColor,
+            int rowIncrement,
+            int colIncrement
+    ) {
+        Collection<ChessMove> moves = new ArrayList<>();
+        ChessPosition newPosition = new ChessPosition(
+                myPosition.getRow() + rowIncrement, myPosition.getColumn() + colIncrement
+        );
+        while (isNotBlocked(board, newPosition, currColor, true)) {
+            if (board.getPiece(newPosition) != null && board.getPiece(newPosition).getTeamColor() != currColor) {
+                moves.add(new ChessMove(myPosition, newPosition, null));
+                break;
+            }
+            moves.add(new ChessMove(myPosition, newPosition, null));
+            newPosition = new ChessPosition(
+                    newPosition.getRow() + rowIncrement,
+                    newPosition.getColumn() + colIncrement
+            );
+        }
+        return moves;
     }
 }
 

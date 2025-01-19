@@ -69,10 +69,10 @@ public class ChessPiece {
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         return switch (pieceType) {
             case KING -> new KingMovesCalculator().pieceMoves(board, myPosition, this.pieceColor);
-//            case QUEEN -> new QueenMovesCalculator().pieceMoves(board, myPosition);
-//            case BISHOP -> new BishopMovesCalculator().pieceMoves(board, myPosition);
-//            case KNIGHT -> new KnightMovesCalculator().pieceMoves(board, myPosition);
-//            case ROOK -> new RookMovesCalculator().pieceMoves(board, myPosition);
+//            case QUEEN -> new QueenMovesCalculator().pieceMoves(board, myPosition, this.pieceColor);
+            case BISHOP -> new BishopMovesCalculator().pieceMoves(board, myPosition, this.pieceColor);
+//            case KNIGHT -> new KnightMovesCalculator().pieceMoves(board, myPosition, this.pieceColor);
+//            case ROOK -> new RookMovesCalculator().pieceMoves(board, myPosition, this.pieceColor );
             case PAWN -> new PawnMovesCalculator().pieceMoves(board, myPosition, this.pieceColor);
             default -> throw new RuntimeException("ChessPiece.pieceMoves case should not happen");
         };
