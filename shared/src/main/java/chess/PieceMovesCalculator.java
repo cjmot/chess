@@ -165,8 +165,48 @@ class KnightMovesCalculator implements PieceMovesCalculator {
  */
 class RookMovesCalculator implements PieceMovesCalculator {
     @Override
-    public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition, ChessGame.TeamColor currColor) {
-        throw new RuntimeException("Not implemented");
+    public Collection<ChessMove> pieceMoves(
+            ChessBoard board,
+            ChessPosition myPosition,
+            ChessGame.TeamColor currColor
+    ) {
+        Collection<ChessMove> moves = new ArrayList<>();
+
+        // up moves
+        moves.addAll(getMoves(board, myPosition, currColor, 1, 0));
+        // right moves
+        moves.addAll(getMoves(board, myPosition, currColor, 0, 1));
+        // down moves
+        moves.addAll(getMoves(board, myPosition, currColor, -1, 0));
+        // left moves
+        moves.addAll(getMoves(board, myPosition, currColor, 0, -1));
+
+        return moves;
+    }
+
+    private Collection<ChessMove> getMoves(
+            ChessBoard board,
+            ChessPosition myPosition,
+            ChessGame.TeamColor currColor,
+            int rowIncrement,
+            int colIncrement
+    ) {
+        Collection<ChessMove> moves = new ArrayList<>();
+        ChessPosition newPosition = new ChessPosition(
+                myPosition.getRow() + rowIncrement, myPosition.getColumn() + colIncrement
+        );
+        while (isNotBlocked(board, newPosition, currColor, true)) {
+            if (board.getPiece(newPosition) != null && board.getPiece(newPosition).getTeamColor() != currColor) {
+                moves.add(new ChessMove(myPosition, newPosition, null));
+                break;
+            }
+            moves.add(new ChessMove(myPosition, newPosition, null));
+            newPosition = new ChessPosition(
+                    newPosition.getRow() + rowIncrement,
+                    newPosition.getColumn() + colIncrement
+            );
+        }
+        return moves;
     }
 }
 
