@@ -14,15 +14,15 @@ public class ChessGame {
     private ChessBoard board;
 
     public ChessGame() {
-        this.board = new ChessBoard();
-        this.turn = TeamColor.WHITE;
+        board = new ChessBoard();
+        turn = TeamColor.WHITE;
     }
 
     /**
      * @return Which team's turn it is
      */
     public TeamColor getTeamTurn() {
-        return this.turn;
+        return turn;
     }
 
     /**
@@ -31,7 +31,7 @@ public class ChessGame {
      * @param team the team whose turn it is
      */
     public void setTeamTurn(TeamColor team) {
-        this.turn = team;
+        turn = team;
     }
 
     /**
@@ -64,13 +64,17 @@ public class ChessGame {
                 move == null
                 || board.getPiece(move.getStartPosition()) == null
                 || !validMoves(move.getStartPosition()).contains(move)
-                || board.getPiece(move.getStartPosition()).getTeamColor() != this.turn
+                || board.getPiece(move.getStartPosition()).getTeamColor() != turn
         ) {
             throw new InvalidMoveException("Invalid move");
+        } else if (move.getPromotionPiece() != null) {
+            board.addPiece(move.getEndPosition(), new ChessPiece(turn, move.getPromotionPiece()));
+            board.addPiece(move.getStartPosition(), null);
+        } else {
+            board.addPiece(move.getEndPosition(), board.getPiece(move.getStartPosition()));
+            board.addPiece(move.getStartPosition(), null);
+            setTeamTurn(turn == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE);
         }
-        board.addPiece(move.getEndPosition(), board.getPiece(move.getStartPosition()));
-        board.addPiece(move.getStartPosition(), null);
-        this.turn = this.turn == TeamColor.BLACK ? TeamColor.WHITE : TeamColor.BLACK;
     }
 
     /**
@@ -119,6 +123,6 @@ public class ChessGame {
      * @return the chessboard
      */
     public ChessBoard getBoard() {
-        return this.board;
+        return board;
     }
 }
