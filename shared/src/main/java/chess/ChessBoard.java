@@ -104,8 +104,6 @@ public class ChessBoard {
                 case 5:
                     this.addPiece(new ChessPosition(row, col), new ChessPiece(color, PieceType.KING));
                     break;
-                default:
-                    throw new RuntimeException("ChessBoard.setRow case fault");
             }
         }
     }

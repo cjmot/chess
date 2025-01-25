@@ -65,6 +65,7 @@ public class ChessGame {
                 || board.getPiece(move.getStartPosition()) == null
                 || !validMoves(move.getStartPosition()).contains(move)
                 || board.getPiece(move.getStartPosition()).getTeamColor() != turn
+                || isInCheck(turn)
         ) {
             throw new InvalidMoveException("Invalid move");
         } else if (move.getPromotionPiece() != null) {
@@ -84,7 +85,24 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        Collection<ChessMove> kingMoves = getKingMoves(teamColor);
+        TeamColor otherTeam = teamColor == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE;
+
+        for (int i=1; i<=8; i++) {
+            for (int j=1; j<=8; j++) {
+                ChessPiece piece = board.getPiece(new ChessPosition(i, j));
+                if (piece != null && piece.getTeamColor() == otherTeam) {
+                    Collection<ChessMove> moves = board.getPiece(new ChessPosition(i, j)).pieceMoves(board, new ChessPosition(i, j));
+                    for (ChessMove move : moves) {
+                        if (kingMoves != null && kingMoves.stream().anyMatch(kingMove -> move.getEndPosition().equals(kingMove.getStartPosition()))
+                        ) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -124,5 +142,19 @@ public class ChessGame {
      */
     public ChessBoard getBoard() {
         return board;
+    }
+
+    private Collection<ChessMove> getKingMoves(TeamColor teamColor) {
+        for (int i=1; i<=8; i++) {
+            for (int j=1; j<=8; j++) {
+                ChessPiece piece = board.getPiece(new ChessPosition(i, j));
+                if (piece != null
+                        && piece.getPieceType() == ChessPiece.PieceType.KING
+                        && piece.getTeamColor() == teamColor) {
+                    return piece.pieceMoves(board, new ChessPosition(i, j));
+                }
+            }
+        }
+        return null;
     }
 }
