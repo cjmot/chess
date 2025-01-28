@@ -1,6 +1,7 @@
 package chess;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * For a class that can manage a chess game, making moves on a board
@@ -74,7 +75,7 @@ public class ChessGame {
         } else {
             board.addPiece(move.getEndPosition(), board.getPiece(move.getStartPosition()));
             board.addPiece(move.getStartPosition(), null);
-            setTeamTurn(turn == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE);
+            setTeamTurn(getOtherTeam(turn));
         }
     }
 
@@ -86,19 +87,22 @@ public class ChessGame {
      */
     public boolean isInCheck(TeamColor teamColor) {
         Collection<ChessMove> kingMoves = getKingMoves(teamColor);
-        TeamColor otherTeam = teamColor == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE;
 
+        TeamColor otherTeam = getOtherTeam(teamColor);
+
+        // Loop through game board
         for (int i=1; i<=8; i++) {
             for (int j=1; j<=8; j++) {
-                ChessPiece piece = board.getPiece(new ChessPosition(i, j));
+
+                ChessPosition position = new ChessPosition(i, j);
+                ChessPiece piece = board.getPiece(position);
+
+                // If piece is not null and is of the other team
                 if (piece != null && piece.getTeamColor() == otherTeam) {
-                    Collection<ChessMove> moves = board.getPiece(new ChessPosition(i, j)).pieceMoves(board, new ChessPosition(i, j));
-                    for (ChessMove move : moves) {
-                        if (kingMoves != null && kingMoves.stream().anyMatch(kingMove -> move.getEndPosition().equals(kingMove.getStartPosition()))
-                        ) {
-                            return true;
-                        }
-                    }
+                    // Get all possible moves for the piece
+                    Collection<ChessMove> moves = board.getPiece(position).pieceMoves(board, position);
+
+                    return checkForCheck(moves, kingMoves);
                 }
             }
         }
@@ -144,6 +148,12 @@ public class ChessGame {
         return board;
     }
 
+    /**
+     * Returns the set of moves of teamColor's king
+     *
+     * @param teamColor the color of the king to get moves for
+     * @return the set of moves of teamColor's king
+     */
     private Collection<ChessMove> getKingMoves(TeamColor teamColor) {
         for (int i=1; i<=8; i++) {
             for (int j=1; j<=8; j++) {
@@ -155,6 +165,29 @@ public class ChessGame {
                 }
             }
         }
-        return null;
+        return Collections.emptyList();
+    }
+    private TeamColor getOtherTeam(TeamColor teamColor) {
+        return teamColor == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE;
+    }
+
+    /**
+     * Checks if any of the moves are the same as the king's position (i.e. the king is in check)
+     *
+     * @param moves the moves to check
+     * @param kingMoves the king's moves
+     * @return true if any of the moves are the same as the king's position
+     */
+    private boolean checkForCheck(Collection<ChessMove> moves, Collection<ChessMove> kingMoves) {
+
+        // Check if any of the moves are the same as the king's position
+        for (ChessMove move : moves) {
+            if (kingMoves != null && kingMoves.stream().anyMatch(
+                    kingMove -> move.getEndPosition().equals(kingMove.getStartPosition()))
+            ) {
+                return true;
+            }
+        }
+        return false;
     }
 }
