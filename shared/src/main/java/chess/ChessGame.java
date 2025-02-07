@@ -57,21 +57,22 @@ public class ChessGame {
             return null;
         }
 
-        Collection<ChessMove> validMoves = new ArrayList<>();
-        Collection<ChessMove> moves = piece.pieceMoves(board, startPosition);
+        Collection<ChessMove> origMoves = piece.pieceMoves(board, startPosition);
+        ArrayList<ChessMove> moves = new ArrayList<>(origMoves);
 
         for (ChessMove move : moves) {
             ChessPiece capturedPiece = board.getPiece(move.getEndPosition());
             board.addPiece(move.getStartPosition(), null);
             board.addPiece(move.getEndPosition(), piece);
-            if (!isInCheck(turn)) {
-                validMoves.add(move);
+            if (isInCheck(turn)) {
+                origMoves.remove(move);
             }
+
             board.addPiece(move.getStartPosition(), piece);
             board.addPiece(move.getEndPosition(), capturedPiece);
         }
 
-        return validMoves;
+        return origMoves;
     }
 
     /**
@@ -85,7 +86,7 @@ public class ChessGame {
 
         if (
                 move == null
-                || board.getPiece(move.getStartPosition()) == null
+                || validMoves(move.getStartPosition()) == null
                 || board.getPiece(move.getStartPosition()).getTeamColor() != turn
                 || !validMoves(move.getStartPosition()).contains(move)
                 || isInCheck(turn)
@@ -135,7 +136,9 @@ public class ChessGame {
                     // Get all possible moves for the piece
                     Collection<ChessMove> moves = board.getPiece(position).pieceMoves(board, position);
 
-                    return checkForCheck(moves, kingPosition);
+                    if (checkForCheck(moves, kingPosition)) {
+                        return true;
+                    }
                 }
             }
         }
@@ -247,7 +250,7 @@ public class ChessGame {
      *
      * @param moves the moves to check
      * @param kingPosition the king's position
-     * @return true if any of the moves are the same as the king's position
+     * @return true if the king is in check
      */
     private boolean checkForCheck(Collection<ChessMove> moves, ChessPosition kingPosition) {
 
