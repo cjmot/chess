@@ -56,6 +56,7 @@ public class ChessGame {
         if (piece == null) {
             return null;
         }
+        TeamColor teamColor = piece.getTeamColor();
 
         Collection<ChessMove> origMoves = piece.pieceMoves(board, startPosition);
         ArrayList<ChessMove> moves = new ArrayList<>(origMoves);
@@ -64,7 +65,7 @@ public class ChessGame {
             ChessPiece capturedPiece = board.getPiece(move.getEndPosition());
             board.addPiece(move.getStartPosition(), null);
             board.addPiece(move.getEndPosition(), piece);
-            if (isInCheck(turn)) {
+            if (isInCheck(teamColor)) {
                 origMoves.remove(move);
             }
 
