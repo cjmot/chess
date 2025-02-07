@@ -1,5 +1,6 @@
 package chess;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -51,7 +52,26 @@ public class ChessGame {
      * startPosition
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-        return board.getPiece(startPosition).pieceMoves(board, startPosition);
+        ChessPiece piece = board.getPiece(startPosition);
+        if (piece == null) {
+            return null;
+        }
+
+        Collection<ChessMove> validMoves = new ArrayList<>();
+        Collection<ChessMove> moves = piece.pieceMoves(board, startPosition);
+
+        for (ChessMove move : moves) {
+            ChessPiece capturedPiece = board.getPiece(move.getEndPosition());
+            board.addPiece(move.getStartPosition(), null);
+            board.addPiece(move.getEndPosition(), piece);
+            if (!isInCheck(turn)) {
+                validMoves.add(move);
+            }
+            board.addPiece(move.getStartPosition(), piece);
+            board.addPiece(move.getEndPosition(), capturedPiece);
+        }
+
+        return validMoves;
     }
 
     /**
@@ -61,20 +81,33 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
+        String invalidMove = "Invalid move";
+
         if (
                 move == null
                 || board.getPiece(move.getStartPosition()) == null
-                || !validMoves(move.getStartPosition()).contains(move)
                 || board.getPiece(move.getStartPosition()).getTeamColor() != turn
+                || !validMoves(move.getStartPosition()).contains(move)
                 || isInCheck(turn)
         ) {
-            throw new InvalidMoveException("Invalid move");
+            throw new InvalidMoveException(invalidMove);
         } else if (move.getPromotionPiece() != null) {
             board.addPiece(move.getEndPosition(), new ChessPiece(turn, move.getPromotionPiece()));
             board.addPiece(move.getStartPosition(), null);
+            if (isInCheck(turn)) {
+                board.addPiece(move.getStartPosition(), new ChessPiece(turn, ChessPiece.PieceType.PAWN));
+                board.addPiece(move.getEndPosition(), null);
+                throw new InvalidMoveException(invalidMove);
+            }
+            setTeamTurn(getOtherTeam(turn));
         } else {
             board.addPiece(move.getEndPosition(), board.getPiece(move.getStartPosition()));
             board.addPiece(move.getStartPosition(), null);
+            if (isInCheck(turn)) {
+                board.addPiece(move.getStartPosition(), board.getPiece(move.getEndPosition()));
+                board.addPiece(move.getEndPosition(), null);
+                throw new InvalidMoveException(invalidMove);
+            }
             setTeamTurn(getOtherTeam(turn));
         }
     }
@@ -86,7 +119,7 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        Collection<ChessMove> kingMoves = getKingMoves(teamColor);
+        ChessPosition kingPosition = getKingPosition(teamColor);
 
         TeamColor otherTeam = getOtherTeam(teamColor);
 
@@ -102,7 +135,7 @@ public class ChessGame {
                     // Get all possible moves for the piece
                     Collection<ChessMove> moves = board.getPiece(position).pieceMoves(board, position);
 
-                    return checkForCheck(moves, kingMoves);
+                    return checkForCheck(moves, kingPosition);
                 }
             }
         }
@@ -116,7 +149,28 @@ public class ChessGame {
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        Collection<ChessMove> kingMoves = getKingMoves(teamColor);
+
+        TeamColor otherTeam = getOtherTeam(teamColor);
+
+        // Loop through game board
+        for (int i=1; i<=8; i++) {
+            for (int j=1; j<=8; j++) {
+                ChessPosition position = new ChessPosition(i, j);
+                ChessPiece piece = board.getPiece(position);
+
+                // If piece is not null and is of the other team
+                if (piece != null && piece.getTeamColor() == otherTeam) {
+                    // Get all possible moves for the piece
+                    Collection<ChessMove> moves = board.getPiece(position).pieceMoves(board, position);
+
+                    if (!checkForCheckMate(moves, kingMoves)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -167,6 +221,23 @@ public class ChessGame {
         }
         return Collections.emptyList();
     }
+
+    private ChessPosition getKingPosition(TeamColor teamColor) {
+        ChessPosition kingPosition = null;
+        for (int i=1; i<=8; i++) {
+            for (int j = 1; j <= 8; j++) {
+                ChessPiece piece = board.getPiece(new ChessPosition(i, j));
+                if (piece != null
+                        && piece.getTeamColor() == teamColor
+                        && piece.getPieceType() == ChessPiece.PieceType.KING
+                ) {
+                    kingPosition = new ChessPosition(i, j);
+                }
+            }
+        }
+        return kingPosition;
+    }
+
     private TeamColor getOtherTeam(TeamColor teamColor) {
         return teamColor == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE;
     }
@@ -175,15 +246,24 @@ public class ChessGame {
      * Checks if any of the moves are the same as the king's position (i.e. the king is in check)
      *
      * @param moves the moves to check
-     * @param kingMoves the king's moves
+     * @param kingPosition the king's position
      * @return true if any of the moves are the same as the king's position
      */
-    private boolean checkForCheck(Collection<ChessMove> moves, Collection<ChessMove> kingMoves) {
+    private boolean checkForCheck(Collection<ChessMove> moves, ChessPosition kingPosition) {
 
         // Check if any of the moves are the same as the king's position
         for (ChessMove move : moves) {
+            if (move.getEndPosition().equals(kingPosition)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean checkForCheckMate(Collection<ChessMove> moves, Collection<ChessMove> kingMoves) {
+        for (ChessMove move : moves) {
             if (kingMoves != null && kingMoves.stream().anyMatch(
-                    kingMove -> move.getEndPosition().equals(kingMove.getStartPosition()))
+                    kingMove -> move.getEndPosition().equals(kingMove.getEndPosition()))
             ) {
                 return true;
             }
