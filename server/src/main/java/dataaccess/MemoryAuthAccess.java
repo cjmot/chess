@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class MemoryAuthAccess implements UserAccess {
+
     private Collection<AuthData> authData;
 
     public MemoryAuthAccess() {
@@ -17,5 +18,9 @@ public class MemoryAuthAccess implements UserAccess {
 
     public Collection<AuthData> getAuthData() {
         return authData;
+    }
+
+    public boolean addAuth(AuthData auth) {
+        return authData.add(auth);
     }
 }

@@ -20,4 +20,8 @@ public class MemoryUserAccess implements UserAccess {
     public Collection<UserData> getUserData() {
         return userData;
     }
+
+    public boolean addUser(UserData user) {
+        return userData.add(user);
+    }
 }

@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import dataaccess.MemoryGameAccess;
 import dataaccess.MemoryUserAccess;
 import dataaccess.MemoryAuthAccess;
-import dto.ClearResponse;
 import service.*;
 import spark.*;
 

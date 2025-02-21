@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class MemoryGameAccess implements UserAccess {
+
     private Collection<GameData> gameData;
 
     public MemoryGameAccess() {
@@ -18,5 +19,9 @@ public class MemoryGameAccess implements UserAccess {
 
     public Collection<GameData> getGameData() {
         return gameData;
+    }
+
+    public boolean addGame(GameData game) {
+        return gameData.add(game);
     }
 }

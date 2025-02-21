@@ -1,35 +1,52 @@
 package service;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import passoff.model.TestCreateRequest;
-import passoff.model.TestUser;
-import passoff.server.TestServerFacade;
-import server.Server;
+import chess.ChessGame;
+import dataaccess.MemoryAuthAccess;
+import dataaccess.MemoryGameAccess;
+import dataaccess.MemoryUserAccess;
+import model.*;
+import org.junit.jupiter.api.*;
+
+import java.util.Collection;
 
 public class UserServiceTests {
 
-    private static Server server;
-    private static TestServerFacade serverFacade;
-    private static User
-
-    @AfterAll
-    static void stopServer() {
-        server.stop();
-    }
+    private static UserService userService;
+    private static GameService gameService;
+    private static AuthService authService;
+    private static MemoryUserAccess userAccess;
+    private static MemoryGameAccess gameAccess;
+    private static MemoryAuthAccess authAccess;
 
     @BeforeAll
     public static void init() {
-        server = new Server();
-        var port = server.run(0);
-        System.out.println("Started test HTTP server on " + port);
+        userService = new UserService();
+        gameService = new GameService();
+        authService = new AuthService();
+        userAccess = new MemoryUserAccess();
+        gameAccess = new MemoryGameAccess();
+        authAccess = new MemoryAuthAccess();
+        userService.setUserAccess(userAccess);
+        gameService.setGameAccess(gameAccess);
+        authService.setAuthAccess(authAccess);
+    }
 
-        serverFacade = new TestServerFacade("localhost", Integer.toString(port));
+    @Test
+    @DisplayName("Clear all data")
+    public void clearAllData() {
+        UserData user = new UserData("boogy", "down", "a lot");
+        GameData game = new GameData(1, "white", "black", "game1", new ChessGame());
+        AuthData auth = new AuthData("authToken", "username");
+        userAccess.addUser(user);
+        gameAccess.addGame(game);
+        authAccess.addAuth(auth);
 
-        existingUser = new TestUser("ExistingUser", "existingUserPassword", "eu@mail.com");
+        userAccess.clear();
+        gameAccess.clear();
+        authAccess.clear();
 
-        newUser = new TestUser("NewUser", "newUserPassword", "nu@mail.com");
-
-        createRequest = new TestCreateRequest("testGame");
+        Assertions.assertEquals(0, userAccess.getUserData().size());
+        Assertions.assertEquals(0, gameAccess.getGameData().size());
+        Assertions.assertEquals(0, authAccess.getAuthData().size());
     }
 }
