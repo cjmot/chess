@@ -16,11 +16,32 @@ public class MemoryAuthAccess implements UserAccess {
         authData.clear();
     }
 
+    public AuthData getAuthByUsername(String username) {
+        for (AuthData auth : authData) {
+            if (auth.username().equals(username)){
+                return auth;
+            }
+        }
+        return null;
+    }
+
+    public AuthData getAuthByToken(String token) {
+        for (AuthData auth : authData) {
+            if (auth.authToken().equals(token)){
+                return auth;
+            }
+        }
+        return null;
+    }
+
     public Collection<AuthData> getAuthData() {
         return authData;
     }
 
-    public boolean addAuth(AuthData auth) {
-        return authData.add(auth);
+    public AuthData addAuth(AuthData newAuth) {
+        if (!authData.add(newAuth)) {
+            return null;
+        }
+        return newAuth;
     }
 }

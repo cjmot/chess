@@ -18,6 +18,8 @@ public class UserServiceTests {
     private static MemoryGameAccess gameAccess;
     private static MemoryAuthAccess authAccess;
 
+    private static UserData normalUser = new UserData("boogy", "down", "hard");
+
     @BeforeAll
     public static void init() {
         userService = new UserService();
@@ -36,7 +38,7 @@ public class UserServiceTests {
     public void clearAllData() {
         UserData user = new UserData("boogy", "down", "a lot");
         GameData game = new GameData(1, "white", "black", "game1", new ChessGame());
-        AuthData auth = new AuthData("authToken", "username");
+        AuthData auth = new AuthData("username", "authToken");
         userAccess.addUser(user);
         gameAccess.addGame(game);
         authAccess.addAuth(auth);
@@ -45,8 +47,16 @@ public class UserServiceTests {
         gameAccess.clear();
         authAccess.clear();
 
-        Assertions.assertEquals(0, userAccess.getUserData().size());
+        Assertions.assertEquals(0, userAccess.getAllUsers().size());
         Assertions.assertEquals(0, gameAccess.getGameData().size());
         Assertions.assertEquals(0, authAccess.getAuthData().size());
+    }
+
+    @Test
+    @DisplayName("Register normal user")
+    public void registerNormalUser() {
+        userService.createUser(normalUser);
+
+        Assertions.assertTrue(userAccess.getAllUsers().contains(normalUser));
     }
 }

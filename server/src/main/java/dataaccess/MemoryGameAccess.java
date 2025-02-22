@@ -17,6 +17,15 @@ public class MemoryGameAccess implements UserAccess {
         gameData.clear();
     }
 
+    public GameData getGameByGameName(String name) {
+        for (GameData game : gameData) {
+            if (game.gameName().equals(name)) {
+                return game;
+            }
+        }
+        return null;
+    }
+
     public Collection<GameData> getGameData() {
         return gameData;
     }

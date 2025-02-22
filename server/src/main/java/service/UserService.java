@@ -1,6 +1,7 @@
 package service;
 
 import dataaccess.MemoryUserAccess;
+import model.UserData;
 
 public class UserService {
 
@@ -17,5 +18,13 @@ public class UserService {
 
     public void setUserAccess(MemoryUserAccess userAccess) {
         this.userAccess = userAccess;
+    }
+
+    public UserData getUser(String username) {
+        return userAccess.getUserByUsername(username);
+    }
+
+    public String createUser(UserData user) {
+        return userAccess.addUser(user);
     }
 }

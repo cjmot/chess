@@ -1,6 +1,9 @@
 package service;
 
 import dataaccess.*;
+import model.AuthData;
+
+import java.util.UUID;
 
 public class AuthService {
 
@@ -16,5 +19,10 @@ public class AuthService {
 
     public void setAuthAccess(MemoryAuthAccess authAccess) {
         this.authAccess = authAccess;
+    }
+
+    public AuthData createAuth(String username) {
+        String authToken = UUID.randomUUID().toString();
+        return authAccess.addAuth(new AuthData(username, authToken));
     }
 }
