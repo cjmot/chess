@@ -8,6 +8,7 @@ import dto.*;
 import model.*;
 import org.junit.jupiter.api.*;
 import server.OtherHandler;
+import server.SessionHandler;
 import service.*;
 
 public class OtherHandlerTests {
@@ -34,7 +35,6 @@ public class OtherHandlerTests {
         gameService.setGameAccess(gameAccess);
         authService.setAuthAccess(authAccess);
         otherHandler.setServices(userService, gameService, authService);
-        otherHandler.handleDelete();
     }
 
     @AfterEach
@@ -54,14 +54,14 @@ public class OtherHandlerTests {
         gameAccess.addGame(game);
         authAccess.addAuth(auth);
 
-        Assertions.assertEquals(new ClearResponse(null), otherHandler.handleDelete());
+        Assertions.assertEquals(new ClearResponse(null), otherHandler.handleClear());
     }
 
     @Test
     @DisplayName("Register normal user")
     public void registerNormalUser() {
         RegisterRequest request = new RegisterRequest(normalUser);
-        RegisterResponse response = otherHandler.register(request);
+        RegisterResponse response = otherHandler.handleRegister(request);
 
         Assertions.assertNull(response.message());
         Assertions.assertEquals(normalUser.username(), response.username());
@@ -72,9 +72,9 @@ public class OtherHandlerTests {
     @DisplayName("Username already exists")
     public void registerUserExists() {
         RegisterRequest request = new RegisterRequest(normalUser);
-        otherHandler.register(request);
+        otherHandler.handleRegister(request);
 
-        RegisterResponse response = otherHandler.register(request);
+        RegisterResponse response = otherHandler.handleRegister(request);
 
         Assertions.assertNotNull(response.message());
         Assertions.assertNull(response.username(), response.authToken());
@@ -85,50 +85,8 @@ public class OtherHandlerTests {
     @DisplayName("Register without username")
     public void registerWithoutUsername() {
         RegisterRequest request = new RegisterRequest(new UserData(null, "password", "email"));
-        RegisterResponse response = otherHandler.register(request);
+        RegisterResponse response = otherHandler.handleRegister(request);
 
         Assertions.assertEquals("Error: bad request", response.message());
-    }
-
-    @Test
-    @DisplayName("Normal login")
-    public void normalLogin() {
-        userAccess.addUser(normalUser);
-        LoginRequest request = new LoginRequest(new UserData(normalUser.username(), normalUser.password(), null));
-        LoginResponse response = otherHandler.login(request);
-
-        Assertions.assertNull(response.message());
-        Assertions.assertEquals("username", response.username());
-        Assertions.assertNotNull(response.authToken());
-    }
-
-    @Test
-    @DisplayName("Login unauthorized")
-    public void loginUnauthorized() {
-        LoginRequest request = new LoginRequest(normalUser);
-        LoginResponse response = otherHandler.login(request);
-
-        Assertions.assertNull(response.username(), response.authToken());
-        Assertions.assertEquals("Error: unauthorized", response.message());
-    }
-
-    @Test
-    @DisplayName("Normal logout")
-    public void normalLogout() {
-        String token = otherHandler.register(new RegisterRequest(normalUser)).authToken();
-        LogoutResponse response = otherHandler.logout(new LogoutRequest(token));
-
-        Assertions.assertNull(response.message());
-        Assertions.assertTrue(authAccess.getAuthData().isEmpty());
-    }
-
-    @Test
-    @DisplayName("Logout unauthorized")
-    public void logoutUnauthorized() {
-        otherHandler.register(new RegisterRequest(normalUser));
-        LogoutResponse response = otherHandler.logout(new LogoutRequest("wrong token"));
-
-        Assertions.assertEquals("Error: unauthorized", response.message());
-        Assertions.assertEquals(1, authAccess.getAuthData().size());
     }
 }

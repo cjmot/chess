@@ -22,7 +22,7 @@ public class OtherHandler {
         this.authService = authService;
     }
 
-    public ClearResponse handleDelete() {
+    public ClearResponse handleClear() {
         userService.clearUserData();
         gameService.clearGameData();
         authService.clearAuthData();
@@ -30,7 +30,7 @@ public class OtherHandler {
         return new ClearResponse(null);
     }
 
-    public RegisterResponse register(RegisterRequest req) {
+    public RegisterResponse handleRegister(RegisterRequest req) {
         if (
                 req.user() == null
                 || req.user().username() == null
@@ -51,21 +51,5 @@ public class OtherHandler {
         AuthData newAuth = authService.createAuth(req.user().username());
 
         return new RegisterResponse(newAuth.username(), newAuth.authToken(), null);
-    }
-
-    public LoginResponse login(LoginRequest req) {
-        if (userService.getUser(req.user().username(), req.user().password()) == null) {
-            return new LoginResponse(null, null, "Error: unauthorized");
-        }
-
-        AuthData newAuth = authService.createAuth(req.user().username());
-        return new LoginResponse(newAuth.username(), newAuth.authToken(), null);
-    }
-
-    public LogoutResponse logout(LogoutRequest req) {
-        if (!authService.verifyAuth(req.authToken())) {
-            return new LogoutResponse("Error: unauthorized");
-        }
-        return new LogoutResponse(authService.deleteAuth(req.authToken()));
     }
 }
