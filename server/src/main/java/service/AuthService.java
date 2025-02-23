@@ -25,4 +25,6 @@ public class AuthService {
         String authToken = UUID.randomUUID().toString();
         return authAccess.addAuth(new AuthData(username, authToken));
     }
+
+//    public String getAuth
 }

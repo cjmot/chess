@@ -26,6 +26,15 @@ public class MemoryUserAccess implements UserAccess {
         return null;
     }
 
+    public UserData getUserByCreds(String username, String password) {
+        for (UserData user : userData) {
+            if (user.username().equals(username) && user.password().equals(password)) {
+                return user;
+            }
+        }
+        return null;
+    }
+
     public Collection<UserData> getAllUsers() {
         return userData;
     }

@@ -67,4 +67,16 @@ public class UserServiceTests {
 
         Assertions.assertEquals("Failed to add user", userService.createUser(normalUser));
     }
+
+    @Test
+    @DisplayName("Normal login")
+    public void normalLogin() {
+        userAccess.addUser(normalUser);
+        UserData user = userService.getUserByCreds(normalUser.username(), normalUser.password());
+        AuthData auth = authService.createAuth(user.username());
+
+        Assertions.assertEquals(normalUser, user);
+        Assertions.assertEquals(normalUser.username(), auth.username());
+        Assertions.assertNotNull(auth.authToken());
+    }
 }
