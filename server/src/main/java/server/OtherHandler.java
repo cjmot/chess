@@ -42,7 +42,7 @@ public class OtherHandler {
             return new RegisterResponse(null, null, "Error: bad request");
         }
         if (userService.getUser(req.user().username()) != null) {
-            return new RegisterResponse(null, null, "Error: already taken");
+            return new RegisterResponse(null, null, "Error: username already taken");
         }
 
         String message = userService.createUser(req.user());
