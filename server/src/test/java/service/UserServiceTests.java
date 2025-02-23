@@ -7,8 +7,6 @@ import dataaccess.MemoryUserAccess;
 import model.*;
 import org.junit.jupiter.api.*;
 
-import java.util.Collection;
-
 public class UserServiceTests {
 
     private static UserService userService;
@@ -72,7 +70,7 @@ public class UserServiceTests {
     @DisplayName("Normal login")
     public void normalLogin() {
         userAccess.addUser(normalUser);
-        UserData user = userService.getUserByCreds(normalUser.username(), normalUser.password());
+        UserData user = userService.getUser(normalUser.username(), normalUser.password());
         AuthData auth = authService.createAuth(user.username());
 
         Assertions.assertEquals(normalUser, user);

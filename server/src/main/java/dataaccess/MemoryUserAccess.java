@@ -17,7 +17,7 @@ public class MemoryUserAccess implements UserAccess {
         userData.clear();
     }
 
-    public UserData getUserByUsername(String username) {
+    public UserData getUser(String username) {
         for (UserData user : userData) {
             if (user.username().equals(username)) {
                 return user;
@@ -26,7 +26,7 @@ public class MemoryUserAccess implements UserAccess {
         return null;
     }
 
-    public UserData getUserByCreds(String username, String password) {
+    public UserData getUser(String username, String password) {
         for (UserData user : userData) {
             if (user.username().equals(username) && user.password().equals(password)) {
                 return user;

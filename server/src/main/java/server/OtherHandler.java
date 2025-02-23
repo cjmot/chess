@@ -1,8 +1,6 @@
 package server;
 
-import dto.ClearResponse;
-import dto.RegisterRequest;
-import dto.RegisterResponse;
+import dto.*;
 import model.AuthData;
 import service.*;
 
@@ -53,5 +51,22 @@ public class OtherHandler {
         AuthData newAuth = authService.createAuth(req.user().username());
 
         return new RegisterResponse(newAuth.username(), newAuth.authToken(), null);
+    }
+
+    public LoginResponse login(LoginRequest req) {
+        if (
+                req.user() == null
+                || req.user().username() == null
+                || req.user().password() == null
+        ) {
+            return new LoginResponse(null, null, "Error: bad request");
+        }
+        if (userService.getUser(req.user().username(), req.user().password()) == null) {
+            return new LoginResponse(null, null, "Error: bad credentials");
+        }
+
+        AuthData newAuth = authService.createAuth(req.user().username());
+
+        return new LoginResponse(newAuth.username(), newAuth.authToken(), null);
     }
 }

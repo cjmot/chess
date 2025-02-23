@@ -20,13 +20,14 @@ public class UserService {
         this.userAccess = userAccess;
     }
 
-    public UserData getUserByUsername(String username) {
-        return userAccess.getUserByUsername(username);
+    public UserData getUser(String username) {
+        return userAccess.getUser(username);
     }
 
-    public UserData getUserByCreds(String username, String password) {
-        return userAccess.getUserByCreds(username, password);
+    public UserData getUser(String username, String password) {
+        return userAccess.getUser(username, password);
     }
+
 
     public String createUser(UserData user) {
         return userAccess.addUser(user);

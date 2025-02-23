@@ -4,20 +4,11 @@ import chess.ChessGame;
 import dataaccess.MemoryAuthAccess;
 import dataaccess.MemoryGameAccess;
 import dataaccess.MemoryUserAccess;
-import dto.ClearResponse;
-import dto.RegisterRequest;
-import dto.RegisterResponse;
-import model.AuthData;
-import model.GameData;
-import model.UserData;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import dto.*;
+import model.*;
+import org.junit.jupiter.api.*;
 import server.OtherHandler;
-import service.AuthService;
-import service.GameService;
-import service.UserService;
+import service.*;
 
 public class OtherHandlerTests {
     private static OtherHandler otherHandler;
@@ -28,7 +19,7 @@ public class OtherHandlerTests {
     private static MemoryGameAccess gameAccess;
     private static MemoryAuthAccess authAccess;
 
-    private static UserData normalUser = new UserData("boogy", "down", "hard");
+    private static UserData normalUser = new UserData("username", "password", "email");
 
     @BeforeAll
     public static void init() {
@@ -43,12 +34,20 @@ public class OtherHandlerTests {
         gameService.setGameAccess(gameAccess);
         authService.setAuthAccess(authAccess);
         otherHandler.setServices(userService, gameService, authService);
+        otherHandler.handleDelete();
+    }
+
+    @AfterEach
+    public void close() {
+        userAccess.clear();
+        gameAccess.clear();
+        authAccess.clear();
     }
 
     @Test
     @DisplayName("Clear all data")
     public void clearAllData() {
-        UserData user = new UserData("boogy", "down", "a lot");
+        UserData user = new UserData("username", "password", "email");
         GameData game = new GameData(1, "white", "black", "game1", new ChessGame());
         AuthData auth = new AuthData("username", "authToken");
         userAccess.addUser(user);
@@ -89,5 +88,17 @@ public class OtherHandlerTests {
         RegisterResponse response = otherHandler.register(request);
 
         Assertions.assertEquals("Error: bad request", response.message());
+    }
+
+    @Test
+    @DisplayName("Normal login")
+    public void normalLogin() {
+        userAccess.addUser(normalUser);
+        LoginRequest request = new LoginRequest(new UserData(normalUser.username(), normalUser.password(), null));
+        LoginResponse response = otherHandler.login(request);
+
+        Assertions.assertNull(response.message());
+        Assertions.assertEquals("username", response.username());
+        Assertions.assertNotNull(response.authToken());
     }
 }
