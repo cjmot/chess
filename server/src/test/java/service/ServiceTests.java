@@ -7,7 +7,7 @@ import dataaccess.MemoryUserAccess;
 import model.*;
 import org.junit.jupiter.api.*;
 
-public class UserServiceTests {
+public class ServiceTests {
 
     private static UserService userService;
     private static GameService gameService;
@@ -16,7 +16,7 @@ public class UserServiceTests {
     private static MemoryGameAccess gameAccess;
     private static MemoryAuthAccess authAccess;
 
-    private static UserData normalUser = new UserData("boogy", "down", "hard");
+    private static final UserData normalUser = new UserData("boogy", "down", "hard");
 
     @BeforeAll
     public static void init() {
@@ -29,6 +29,13 @@ public class UserServiceTests {
         userService.setUserAccess(userAccess);
         gameService.setGameAccess(gameAccess);
         authService.setAuthAccess(authAccess);
+    }
+
+    @AfterAll
+    public static void close() {
+        userAccess.clear();
+        gameAccess.clear();
+        authAccess.clear();
     }
 
     @Test
@@ -76,5 +83,15 @@ public class UserServiceTests {
         Assertions.assertEquals(normalUser, user);
         Assertions.assertEquals(normalUser.username(), auth.username());
         Assertions.assertNotNull(auth.authToken());
+    }
+
+    @Test
+    @DisplayName("Normal logout")
+    public void normalLogout() {
+        userAccess.addUser(normalUser);
+        AuthData auth = authService.createAuth(normalUser.username());
+
+        Assertions.assertNull(authService.deleteAuth(auth.authToken()));
+        Assertions.assertTrue(authAccess.getAuthData().isEmpty());
     }
 }

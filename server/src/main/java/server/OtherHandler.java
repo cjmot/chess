@@ -61,4 +61,11 @@ public class OtherHandler {
         AuthData newAuth = authService.createAuth(req.user().username());
         return new LoginResponse(newAuth.username(), newAuth.authToken(), null);
     }
+
+    public LogoutResponse logout(LogoutRequest req) {
+        if (!authService.verifyAuth(req.authToken())) {
+            return new LogoutResponse("Error: unauthorized");
+        }
+        return new LogoutResponse(authService.deleteAuth(req.authToken()));
+    }
 }

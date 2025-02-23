@@ -16,15 +16,6 @@ public class MemoryAuthAccess implements UserAccess {
         authData.clear();
     }
 
-    public AuthData getAuthByUsername(String username) {
-        for (AuthData auth : authData) {
-            if (auth.username().equals(username)){
-                return auth;
-            }
-        }
-        return null;
-    }
-
     public AuthData getAuthByToken(String token) {
         for (AuthData auth : authData) {
             if (auth.authToken().equals(token)){
@@ -43,5 +34,23 @@ public class MemoryAuthAccess implements UserAccess {
             return null;
         }
         return newAuth;
+    }
+
+    public String deleteAuth(String token) {
+        AuthData authToRemove = null;
+        for (AuthData auth : authData) {
+            if (auth.authToken().equals(token)) {
+                authToRemove = auth;
+            }
+        }
+
+        if (!authData.remove(authToRemove)) {
+            return "Failed to remove auth";
+        }
+        return null;
+    }
+
+    public boolean getAuth(String token) {
+        return authData.stream().anyMatch(auth -> auth.authToken().equals(token));
     }
 }

@@ -111,4 +111,24 @@ public class OtherHandlerTests {
         Assertions.assertNull(response.username(), response.authToken());
         Assertions.assertEquals("Error: unauthorized", response.message());
     }
+
+    @Test
+    @DisplayName("Normal logout")
+    public void normalLogout() {
+        String token = otherHandler.register(new RegisterRequest(normalUser)).authToken();
+        LogoutResponse response = otherHandler.logout(new LogoutRequest(token));
+
+        Assertions.assertNull(response.message());
+        Assertions.assertTrue(authAccess.getAuthData().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Logout unauthorized")
+    public void logoutUnauthorized() {
+        otherHandler.register(new RegisterRequest(normalUser));
+        LogoutResponse response = otherHandler.logout(new LogoutRequest("wrong token"));
+
+        Assertions.assertEquals("Error: unauthorized", response.message());
+        Assertions.assertEquals(1, authAccess.getAuthData().size());
+    }
 }

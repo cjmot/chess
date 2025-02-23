@@ -26,5 +26,11 @@ public class AuthService {
         return authAccess.addAuth(new AuthData(username, authToken));
     }
 
-//    public String getAuth
+    public String deleteAuth(String auth) {
+        return authAccess.deleteAuth(auth);
+    }
+
+    public boolean verifyAuth(String token) {
+        return authAccess.getAuth(token);
+    }
 }
