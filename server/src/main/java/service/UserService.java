@@ -1,6 +1,7 @@
 package service;
 
 import dataaccess.MemoryUserAccess;
+import dto.ClearResponse;
 import model.UserData;
 
 public class UserService {
@@ -11,9 +12,8 @@ public class UserService {
         userAccess = null;
     }
 
-    public void clearUserData() {
-        setUserAccess(userAccess);
-        this.userAccess.clear();
+    public ClearResponse clearUserData() {
+        return new ClearResponse(userAccess.clear());
     }
 
     public void setUserAccess(MemoryUserAccess userAccess) {

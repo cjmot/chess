@@ -4,6 +4,7 @@ import chess.ChessGame;
 import dataaccess.MemoryAuthAccess;
 import dataaccess.MemoryGameAccess;
 import dataaccess.MemoryUserAccess;
+import dto.ClearResponse;
 import model.*;
 import org.junit.jupiter.api.*;
 
@@ -48,9 +49,11 @@ public class ServiceTests {
         gameAccess.addGame(game);
         authAccess.addAuth(auth);
 
-        userAccess.clear();
-        gameAccess.clear();
-        authAccess.clear();
+        ClearResponse expected = new ClearResponse(null);
+
+        Assertions.assertEquals(expected, userService.clearUserData());
+        Assertions.assertEquals(expected, authService.clearAuthData());
+        Assertions.assertEquals(expected, gameService.clearGameData());
 
         Assertions.assertEquals(0, userAccess.getAllUsers().size());
         Assertions.assertEquals(0, gameAccess.getGameData().size());

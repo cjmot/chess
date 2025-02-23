@@ -13,8 +13,9 @@ public class MemoryGameAccess implements UserAccess {
         gameData = new ArrayList<>();
     }
 
-    public void clear() {
+    public String clear() {
         gameData.clear();
+        return null;
     }
 
     public GameData getGameByGameName(String name) {

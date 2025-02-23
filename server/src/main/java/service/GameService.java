@@ -1,6 +1,7 @@
 package service;
 
 import dataaccess.MemoryGameAccess;
+import dto.ClearResponse;
 
 public class GameService {
 
@@ -14,7 +15,7 @@ public class GameService {
         this.gameAccess = gameAccess;
     }
 
-    public void clearGameData() {
-        this.gameAccess.clear();
+    public ClearResponse clearGameData() {
+        return new ClearResponse(gameAccess.clear());
     }
 }

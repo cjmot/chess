@@ -1,19 +1,23 @@
 package server;
 
+import com.google.gson.Gson;
 import dto.*;
 import model.AuthData;
 import service.*;
+import spark.Response;
 
 public class OtherHandler {
 
     private AuthService authService;
     private GameService gameService;
     private UserService userService;
+    private final Gson gson;
 
     public OtherHandler() {
         authService = null;
         gameService = null;
         userService = null;
+        gson = new Gson();
     }
 
     public void setServices(UserService userService, GameService gameService, AuthService authService) {
@@ -22,12 +26,29 @@ public class OtherHandler {
         this.authService = authService;
     }
 
-    public ClearResponse handleClear() {
-        userService.clearUserData();
-        gameService.clearGameData();
-        authService.clearAuthData();
+    public String handleClear(Response res) {
+        ClearResponse response;
 
-        return new ClearResponse(null);
+        ClearResponse userCleared = userService.clearUserData();
+        ClearResponse gameCleared = gameService.clearGameData();
+        ClearResponse authCleared = authService.clearAuthData();
+
+        if (userCleared.message() != null) {
+            res.status(500);
+            response = userCleared;
+        } else if (gameCleared.message() != null) {
+            res.status(500);
+            response = gameCleared;
+        } else if (authCleared.message() != null) {
+            res.status(500);
+            response = authCleared;
+        } else {
+            res.status(200);
+            response = userCleared;
+        }
+        res.type("application/json");
+
+        return gson.toJson((response));
     }
 
     public RegisterResponse handleRegister(RegisterRequest req) {

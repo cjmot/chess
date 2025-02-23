@@ -1,6 +1,7 @@
 package service;
 
 import dataaccess.*;
+import dto.ClearResponse;
 import model.AuthData;
 
 import java.util.UUID;
@@ -13,8 +14,8 @@ public class AuthService {
         authAccess = null;
     }
 
-    public void clearAuthData() {
-        authAccess.clear();
+    public ClearResponse clearAuthData() {
+        return new ClearResponse(authAccess.clear());
     }
 
     public void setAuthAccess(MemoryAuthAccess authAccess) {

@@ -13,8 +13,9 @@ public class MemoryUserAccess implements UserAccess {
         userData = new HashSet<>();
     }
 
-    public void clear() {
+    public String clear() {
         userData.clear();
+        return null;
     }
 
     public UserData getUser(String username) {

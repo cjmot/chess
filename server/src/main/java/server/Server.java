@@ -41,7 +41,7 @@ public class Server {
         setVariables();
 
         // Register your endpoints and handle exceptions here.
-        Spark.delete("/db", (_, res) -> this.clear(res));
+        Spark.delete("/db", (_, res) -> otherHandler.handleClear(res));
 
         Spark.post("/user", this::register);
 
@@ -67,17 +67,6 @@ public class Server {
         authService.setAuthAccess(authAccess);
         otherHandler.setServices(userService, gameService, authService);
         sessionHandler.setServices(userService, authService);
-    }
-
-    private String clear(Response res) {
-        ClearResponse response = otherHandler.handleClear();
-        if (response.message() != null) {
-            res.status(500);
-        } else {
-            res.status(200);
-        }
-        res.type("application/json");
-        return gson.toJson(response);
     }
 
     private String register(Request req, Response res) {

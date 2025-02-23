@@ -12,8 +12,9 @@ public class MemoryAuthAccess implements UserAccess {
         authData = new ArrayList<>();
     }
 
-    public void clear() {
+    public String clear() {
         authData.clear();
+        return null;
     }
 
     public AuthData getAuthByToken(String token) {
