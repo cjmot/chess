@@ -54,19 +54,11 @@ public class OtherHandler {
     }
 
     public LoginResponse login(LoginRequest req) {
-        if (
-                req.user() == null
-                || req.user().username() == null
-                || req.user().password() == null
-        ) {
-            return new LoginResponse(null, null, "Error: bad request");
-        }
         if (userService.getUser(req.user().username(), req.user().password()) == null) {
-            return new LoginResponse(null, null, "Error: bad credentials");
+            return new LoginResponse(null, null, "Error: unauthorized");
         }
 
         AuthData newAuth = authService.createAuth(req.user().username());
-
         return new LoginResponse(newAuth.username(), newAuth.authToken(), null);
     }
 }

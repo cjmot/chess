@@ -101,4 +101,14 @@ public class OtherHandlerTests {
         Assertions.assertEquals("username", response.username());
         Assertions.assertNotNull(response.authToken());
     }
+
+    @Test
+    @DisplayName("Login unauthorized")
+    public void loginUnauthorized() {
+        LoginRequest request = new LoginRequest(normalUser);
+        LoginResponse response = otherHandler.login(request);
+
+        Assertions.assertNull(response.username(), response.authToken());
+        Assertions.assertEquals("Error: unauthorized", response.message());
+    }
 }
