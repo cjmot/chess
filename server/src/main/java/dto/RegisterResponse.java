@@ -1,3 +1,3 @@
 package dto;
 
-public record RegisterResponse(String authToken, String username, String message) { }
+public record RegisterResponse(String username, String authToken, String message) { }

@@ -59,4 +59,12 @@ public class UserServiceTests {
 
         Assertions.assertTrue(userAccess.getAllUsers().contains(normalUser));
     }
+
+    @Test
+    @DisplayName("Username already exists")
+    public void registerUserExists() {
+        userService.createUser(normalUser);
+
+        Assertions.assertEquals("Failed to add user", userService.createUser(normalUser));
+    }
 }
