@@ -1,11 +1,11 @@
 package service;
 
-import dataAccess.MemoryAuthAccess;
-import dataAccess.MemoryUserAccess;
-import model.LoginRequest;
-import model.LoginResponse;
-import model.LogoutRequest;
-import model.LogoutResponse;
+import dataaccess.MemoryAuthAccess;
+import dataaccess.MemoryUserAccess;
+import dto.LoginRequest;
+import dto.LoginResponse;
+import dto.LogoutRequest;
+import dto.LogoutResponse;
 import model.AuthData;
 import model.UserData;
 

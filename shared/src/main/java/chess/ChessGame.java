@@ -216,26 +216,6 @@ public class ChessGame {
         return board;
     }
 
-    /**
-     * Returns the set of moves of teamColor's king
-     *
-     * @param teamColor the color of the king to get moves for
-     * @return the set of moves of teamColor's king
-     */
-    private Collection<ChessMove> getKingMoves(TeamColor teamColor) {
-        for (int i=1; i<=8; i++) {
-            for (int j=1; j<=8; j++) {
-                ChessPiece piece = board.getPiece(new ChessPosition(i, j));
-                if (piece != null
-                        && piece.getPieceType() == ChessPiece.PieceType.KING
-                        && piece.getTeamColor() == teamColor) {
-                    return piece.pieceMoves(board, new ChessPosition(i, j));
-                }
-            }
-        }
-        return Collections.emptyList();
-    }
-
     private ChessPosition getKingPosition(TeamColor teamColor) {
         ChessPosition kingPosition = null;
         for (int i=1; i<=8; i++) {
@@ -268,17 +248,6 @@ public class ChessGame {
         // Check if any of the moves are the same as the king's position
         for (ChessMove move : moves) {
             if (move.getEndPosition().equals(kingPosition)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean checkForCheckMate(Collection<ChessMove> moves, Collection<ChessMove> kingMoves) {
-        for (ChessMove move : moves) {
-            if (kingMoves != null && kingMoves.stream().anyMatch(
-                    kingMove -> move.getEndPosition().equals(kingMove.getEndPosition()))
-            ) {
                 return true;
             }
         }

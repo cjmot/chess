@@ -1,3 +1,3 @@
-package model;
+package dto;
 
 public record ClearResponse(String message) { }

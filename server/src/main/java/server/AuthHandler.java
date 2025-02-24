@@ -1,15 +1,15 @@
 package server;
 
 import com.google.gson.Gson;
-import model.ClearResponse;
-import model.RegisterRequest;
-import model.RegisterResponse;
+import dto.ClearResponse;
+import dto.RegisterRequest;
+import dto.RegisterResponse;
 import model.UserData;
 import service.*;
 import spark.Request;
 import spark.Response;
 
-public class AuthHandler {
+public class AuthHandler implements Handler {
 
     private AuthService authService;
     private final Gson gson;
@@ -24,7 +24,7 @@ public class AuthHandler {
     }
 
     public String handleClear(Request req, Response res) {
-        if (gson.fromJson(req.body(), String.class) != null) {
+        if (notValidJson(req.body()) || gson.fromJson(req.body(), String.class) != null) {
             res.status(500);
             return gson.toJson(new ClearResponse("Error: bad request"));
         }
@@ -41,6 +41,10 @@ public class AuthHandler {
     }
 
     public String handleRegister(Request request, Response res) {
+        if (notValidJson(request.body())) {
+            res.status(500);
+            return gson.toJson(new RegisterResponse(null, null, "Error: bad request"));
+        }
         UserData user = gson.fromJson(request.body(), UserData.class);
 
         if (user.username() == null || user.password() == null || user.email() == null) {

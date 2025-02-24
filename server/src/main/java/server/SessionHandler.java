@@ -1,18 +1,16 @@
 package server;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
-import model.LoginRequest;
-import model.LoginResponse;
-import model.LogoutRequest;
-import model.LogoutResponse;
+import dto.LoginRequest;
+import dto.LoginResponse;
+import dto.LogoutRequest;
+import dto.LogoutResponse;
 import model.UserData;
 import service.UserService;
 import spark.Request;
 import spark.Response;
 
-public class SessionHandler {
+public class SessionHandler implements Handler {
 
     private UserService userService;
     private final Gson gson;
@@ -27,7 +25,7 @@ public class SessionHandler {
     }
 
     public String login(Request req, Response res) {
-        if (!isValidJson(req.body())) {
+        if (notValidJson(req.body())) {
             res.status(401);
             return gson.toJson(new LoginResponse(null, null, "Error: unauthorized"));
         }
@@ -37,7 +35,9 @@ public class SessionHandler {
         if (response.message() != null) {
             if (response.message().contains("unauthorized")) {
                 res.status(401);
-            } else res.status(500);
+            } else {
+                res.status(500);
+            }
         } else {
             res.status(200);
         }
@@ -47,7 +47,7 @@ public class SessionHandler {
     }
 
     public String logout(Request req, Response res) {
-        if (!isValidJson(req.headers("authorization"))) {
+        if (notValidJson(req.headers("authorization"))) {
             res.status(401);
             return gson.toJson(new LogoutResponse("Error: unauthorized"));
         }
@@ -57,21 +57,14 @@ public class SessionHandler {
         if (response.message() != null) {
             if (response.message().contains("unauthorized")) {
                 res.status(401);
-            } else res.status(500);
+            } else {
+                res.status(500);
+            }
         } else {
             res.status(200);
         }
 
         res.type("application/json");
         return gson.toJson(response);
-    }
-
-    private boolean isValidJson(String json) {
-        try {
-            JsonParser.parseString(json);
-            return true;
-        } catch (JsonSyntaxException e) {
-            return false;
-        }
     }
 }

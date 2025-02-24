@@ -1,8 +1,9 @@
 package service;
 
 import chess.ChessGame;
-import dataAccess.MemoryAuthAccess;
-import dataAccess.MemoryGameAccess;
+import dataaccess.MemoryAuthAccess;
+import dataaccess.MemoryGameAccess;
+import dto.*;
 import model.*;
 
 import java.util.Set;

@@ -33,7 +33,9 @@ public interface PieceMovesCalculator {
             return false;
         } else if (board.getPiece(position) == null) {
             return true;
-        } else return board.getPiece(position).getTeamColor() != currColor && canCapture;
+        } else {
+            return board.getPiece(position).getTeamColor() != currColor && canCapture;
+        }
     }
 
     /**
@@ -220,7 +222,9 @@ class PawnMovesCalculator implements PieceMovesCalculator {
     ) {
         if (currColor == ChessGame.TeamColor.WHITE) {
             return getWhitePawnMoves(board, myPosition, currColor);
-        } else return getBlackPawnMoves(board, myPosition, currColor);
+        } else {
+            return getBlackPawnMoves(board, myPosition, currColor);
+        }
     }
 
     /**

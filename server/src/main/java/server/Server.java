@@ -1,8 +1,8 @@
 package server;
 
-import dataAccess.MemoryGameAccess;
-import dataAccess.MemoryUserAccess;
-import dataAccess.MemoryAuthAccess;
+import dataaccess.MemoryGameAccess;
+import dataaccess.MemoryUserAccess;
+import dataaccess.MemoryAuthAccess;
 import service.*;
 import spark.*;
 

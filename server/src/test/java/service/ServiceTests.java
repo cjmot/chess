@@ -1,9 +1,10 @@
 package service;
 
 import chess.ChessGame;
-import dataAccess.MemoryAuthAccess;
-import dataAccess.MemoryGameAccess;
-import dataAccess.MemoryUserAccess;
+import dataaccess.MemoryAuthAccess;
+import dataaccess.MemoryGameAccess;
+import dataaccess.MemoryUserAccess;
+import dto.*;
 import model.*;
 import org.junit.jupiter.api.*;
 
@@ -18,7 +19,7 @@ public class ServiceTests {
     private static MemoryGameAccess gameAccess;
     private static MemoryAuthAccess authAccess;
 
-    private static final UserData normalUser = new UserData("username", "password", "email");
+    private static UserData normalUser;
 
     @BeforeAll
     public static void init() {
@@ -31,6 +32,7 @@ public class ServiceTests {
         userService.setAccess(userAccess, authAccess);
         gameService.setGameAccess(gameAccess, authAccess);
         authService.setAuthAccess(userAccess, gameAccess, authAccess);
+        normalUser = new UserData("username", "password", "email");
     }
 
     @AfterEach

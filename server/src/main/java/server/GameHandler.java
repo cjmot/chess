@@ -1,14 +1,13 @@
 package server;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
+import dto.*;
 import model.*;
 import service.GameService;
 import spark.Request;
 import spark.Response;
 
-public class GameHandler {
+public class GameHandler implements Handler {
 
     private GameService gameService;
     private final Gson gson;
@@ -23,7 +22,7 @@ public class GameHandler {
     }
 
     public String listGames(Request req, Response res) {
-        if (!(isValidJson(req.headers("authorization")))) {
+        if (notValidJson(req.headers("authorization"))) {
             res.status(401);
             return gson.toJson(new ListGamesResponse(null, "Error: unauthorized"));
         }
@@ -32,7 +31,9 @@ public class GameHandler {
         if (response.message() != null) {
             if (response.message().contains("unauthorized")) {
                 res.status(401);
-            } else res.status(500);
+            } else {
+                res.status(500);
+            }
         } else {
             res.status(200);
         }
@@ -41,7 +42,7 @@ public class GameHandler {
     }
 
     public String createGame(Request req, Response res) {
-        if (!isValidJson(req.headers("authorization")) || !isValidJson(req.body())) {
+        if (notValidJson(req.headers("authorization")) || notValidJson(req.body())) {
             res.status(401);
             return gson.toJson(new CreateGameResponse(null, "Error: unauthorized"));
         }
@@ -51,7 +52,9 @@ public class GameHandler {
         if (response.message() != null) {
             if (response.message().contains("unauthorized")) {
                 res.status(401);
-            } else res.status(500);
+            } else {
+                res.status(500);
+            }
         } else {
             res.status(200);
         }
@@ -60,7 +63,7 @@ public class GameHandler {
     }
 
     public String joinGame(Request req, Response res) {
-        if (!isValidJson(req.headers("authorization")) || !isValidJson(req.body())) {
+        if (notValidJson(req.headers("authorization")) || notValidJson(req.body())) {
             res.status(401);
             return gson.toJson(new JoinGameResponse("Error: unauthorized"));
         }
@@ -83,21 +86,14 @@ public class GameHandler {
                 res.status(401);
             } else if (response.message().contains("already taken")) {
                 res.status(403);
-            } else res.status(500);
+            } else {
+                res.status(500);
+            }
         } else {
             res.status(200);
         }
 
         res.type("application/json");
         return gson.toJson(response);
-    }
-
-    private boolean isValidJson(String json) {
-        try {
-            JsonParser.parseString(json);
-            return true;
-        } catch (JsonSyntaxException e) {
-            return false;
-        }
     }
 }

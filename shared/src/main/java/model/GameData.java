@@ -33,10 +33,6 @@ public class GameData {
         return this.gameName;
     }
 
-    public ChessGame game() {
-        return this.game;
-    }
-
     public void setWhiteUsername(String username) {
         this.whiteUsername = username;
     }
