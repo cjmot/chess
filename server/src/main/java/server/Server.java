@@ -37,7 +37,7 @@ public class Server {
 
         setVariables();
 
-        Spark.delete("/db", (_, res) -> authHandler.handleClear(res));
+        Spark.delete("/db", authHandler::handleClear);
 
         Spark.post("/user", authHandler::handleRegister);
 

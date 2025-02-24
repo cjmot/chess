@@ -23,7 +23,11 @@ public class AuthHandler {
         this.authService = authService;
     }
 
-    public String handleClear(Response res) {
+    public String handleClear(Request req, Response res) {
+        if (gson.fromJson(req.body(), String.class) != null) {
+            res.status(500);
+            return gson.toJson(new ClearResponse("Error: bad request"));
+        }
         ClearResponse response = authService.clear();
 
         if (response.message() != null) {
