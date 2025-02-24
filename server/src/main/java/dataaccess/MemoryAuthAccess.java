@@ -4,9 +4,9 @@ import model.AuthData;
 import java.util.HashSet;
 import java.util.Set;
 
-public class MemoryAuthAccess implements UserAccess {
+public class MemoryAuthAccess implements AuthAccess {
 
-    private Set<AuthData> authData;
+    private final Set<AuthData> authData;
 
     public MemoryAuthAccess() {
         authData = new HashSet<>();

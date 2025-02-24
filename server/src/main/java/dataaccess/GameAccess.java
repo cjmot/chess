@@ -1,6 +1,16 @@
 package dataaccess;
 
+import model.GameData;
+
+import java.util.Set;
+
 public interface GameAccess {
-    void clear();
+    String clear();
+
+    Set<GameData> getAllGames();
+
+    String addGame(GameData game);
+
+    String updateGame(String playerColor, Integer gameID, String username);
 }
 

@@ -27,6 +27,10 @@ public class SessionHandler {
     }
 
     public String login(Request req, Response res) {
+        if (!isValidJson(req.body())) {
+            res.status(401);
+            return gson.toJson(new LoginResponse(null, null, "Error: unauthorized"));
+        }
         UserData user = gson.fromJson(req.body(), UserData.class);
         LoginResponse response = userService.login(new LoginRequest(user));
 

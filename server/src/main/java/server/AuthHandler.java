@@ -1,10 +1,7 @@
 package server;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
 import dto.ClearResponse;
-import dto.JoinGameResponse;
 import dto.RegisterRequest;
 import dto.RegisterResponse;
 import model.UserData;
@@ -12,12 +9,12 @@ import service.*;
 import spark.Request;
 import spark.Response;
 
-public class OtherHandler {
+public class AuthHandler {
 
     private AuthService authService;
     private final Gson gson;
 
-    public OtherHandler() {
+    public AuthHandler() {
         authService = null;
         gson = new Gson();
     }

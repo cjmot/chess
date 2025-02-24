@@ -44,7 +44,7 @@ public class AuthService {
     }
 
     public RegisterResponse register(RegisterRequest req) {
-        if (userAccess.getUser(req.user().username()) != null) {
+        if (userAccess.getUserByUsername(req.user().username()) != null) {
             return new RegisterResponse(null, null, "Error: already taken");
         }
 

@@ -7,7 +7,7 @@ import java.util.Set;
 
 public class MemoryUserAccess implements UserAccess {
 
-    private Set<UserData> userData;
+    private final Set<UserData> userData;
 
     public MemoryUserAccess() {
         userData = new HashSet<>();
@@ -18,7 +18,7 @@ public class MemoryUserAccess implements UserAccess {
         return null;
     }
 
-    public UserData getUser(String username) {
+    public UserData getUserByUsername(String username) {
         for (UserData user : userData) {
             if (user.username().equals(username)) {
                 return user;

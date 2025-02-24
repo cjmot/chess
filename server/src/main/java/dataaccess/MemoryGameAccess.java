@@ -5,9 +5,9 @@ import model.GameData;
 import java.util.HashSet;
 import java.util.Set;
 
-public class MemoryGameAccess implements UserAccess {
+public class MemoryGameAccess implements GameAccess {
 
-    private Set<GameData> gameData;
+    private final Set<GameData> gameData;
 
     public MemoryGameAccess() {
         gameData = new HashSet<>();

@@ -8,7 +8,7 @@ import spark.*;
 
 public class Server {
 
-    private final OtherHandler otherHandler;
+    private final AuthHandler authHandler;
     private final SessionHandler sessionHandler;
     private final GameHandler gameHandler;
     private final MemoryUserAccess userAccess;
@@ -19,7 +19,7 @@ public class Server {
     private final GameService gameService;
 
     public Server() {
-        otherHandler = new OtherHandler();
+        authHandler = new AuthHandler();
         sessionHandler = new SessionHandler();
         gameHandler = new GameHandler();
         userAccess = new MemoryUserAccess();
@@ -37,10 +37,9 @@ public class Server {
 
         setVariables();
 
-        // Register your endpoints and handle exceptions here.
-        Spark.delete("/db", (_, res) -> otherHandler.handleClear(res));
+        Spark.delete("/db", (_, res) -> authHandler.handleClear(res));
 
-        Spark.post("/user", otherHandler::handleRegister);
+        Spark.post("/user", authHandler::handleRegister);
 
         Spark.post("/session", sessionHandler::login);
 
@@ -68,7 +67,7 @@ public class Server {
         userService.setAccess(userAccess, authAccess);
         gameService.setGameAccess(gameAccess, authAccess);
         authService.setAuthAccess(userAccess, gameAccess, authAccess);
-        otherHandler.setService(authService);
+        authHandler.setService(authService);
         sessionHandler.setService(userService);
         gameHandler.setService(gameService);
     }

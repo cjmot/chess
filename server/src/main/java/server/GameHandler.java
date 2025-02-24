@@ -42,7 +42,7 @@ public class GameHandler {
     }
 
     public String createGame(Request req, Response res) {
-        if (!(isValidJson(req.headers("authorization")))) {
+        if (!isValidJson(req.headers("authorization")) || !isValidJson(req.body())) {
             res.status(401);
             return gson.toJson(new CreateGameResponse(null, "Error: unauthorized"));
         }
@@ -61,7 +61,7 @@ public class GameHandler {
     }
 
     public String joinGame(Request req, Response res) {
-        if (!isValidJson(req.headers("authorization"))) {
+        if (!isValidJson(req.headers("authorization")) || !isValidJson(req.body())) {
             res.status(401);
             return gson.toJson(new JoinGameResponse("Error: unauthorized"));
         }
