@@ -1,9 +1,9 @@
 package service;
 
 import chess.ChessGame;
-import dataaccess.MemoryAuthAccess;
-import dataaccess.MemoryGameAccess;
-import dataaccess.MemoryUserAccess;
+import dataAccess.MemoryAuthAccess;
+import dataAccess.MemoryGameAccess;
+import dataAccess.MemoryUserAccess;
 import model.*;
 import org.junit.jupiter.api.*;
 

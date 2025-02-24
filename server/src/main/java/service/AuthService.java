@@ -1,6 +1,6 @@
 package service;
 
-import dataaccess.*;
+import dataAccess.*;
 import model.ClearResponse;
 import model.RegisterRequest;
 import model.RegisterResponse;
