@@ -42,12 +42,12 @@ public class MemoryAuthAccess implements UserAccess {
         return null;
     }
 
-    public boolean getAuth(String token) {
+    public AuthData getAuth(String token) {
         for (AuthData auth : authData) {
             if (auth.authToken().equals(token)) {
-                return true;
+                return auth;
             }
         }
-        return false;
+        return null;
     }
 }

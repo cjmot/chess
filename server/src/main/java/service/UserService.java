@@ -33,7 +33,7 @@ public class UserService {
         }
 
         String token = UUID.randomUUID().toString();
-        String addedMessage = authAccess.addAuth(new AuthData(token, user.username()));
+        String addedMessage = authAccess.addAuth(new AuthData(user.username(), token));
         if (addedMessage != null) {
             return new LoginResponse(null, null, addedMessage);
         }
@@ -42,7 +42,7 @@ public class UserService {
     }
 
     public LogoutResponse logout(LogoutRequest req) {
-        if (!authAccess.getAuth(req.authToken())) {
+        if (authAccess.getAuth(req.authToken()) == null) {
             return new LogoutResponse("Error: unauthorized");
         }
         String deletedMessage = authAccess.deleteAuth(req.authToken());

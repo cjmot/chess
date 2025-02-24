@@ -1,6 +1,8 @@
 package server;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import dto.LoginRequest;
 import dto.LoginResponse;
 import dto.LogoutRequest;
@@ -41,6 +43,10 @@ public class SessionHandler {
     }
 
     public String logout(Request req, Response res) {
+        if (!isValidJson(req.headers("authorization"))) {
+            res.status(401);
+            return gson.toJson(new LogoutResponse("Error: unauthorized"));
+        }
         String token = gson.fromJson(req.headers("authorization"), String.class);
         LogoutResponse response = userService.logout(new LogoutRequest(token));
 
@@ -54,5 +60,14 @@ public class SessionHandler {
 
         res.type("application/json");
         return gson.toJson(response);
+    }
+
+    private boolean isValidJson(String json) {
+        try {
+            JsonParser.parseString(json);
+            return true;
+        } catch (JsonSyntaxException e) {
+            return false;
+        }
     }
 }

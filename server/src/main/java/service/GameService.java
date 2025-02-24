@@ -3,15 +3,11 @@ package service;
 import chess.ChessGame;
 import dataaccess.MemoryAuthAccess;
 import dataaccess.MemoryGameAccess;
-import dto.CreateGameRequest;
-import dto.CreateGameResponse;
-import dto.ListGamesRequest;
-import dto.ListGamesResponse;
+import dto.*;
 import model.AuthData;
 import model.GameData;
 
 import java.util.Set;
-import java.util.UUID;
 
 public class GameService {
 
@@ -29,7 +25,7 @@ public class GameService {
     }
 
     public ListGamesResponse listGames(ListGamesRequest req) {
-        if (!authAccess.getAuth(req.authToken())) {
+        if (authAccess.getAuth(req.authToken()) == null) {
             return new ListGamesResponse(null, "Error: unauthorized");
         }
 
@@ -41,14 +37,14 @@ public class GameService {
     }
 
     public CreateGameResponse createGame(CreateGameRequest req) {
-        if (!authAccess.getAuth(req.authToken())) {
+        if (authAccess.getAuth(req.authToken()) == null) {
             return new CreateGameResponse(null, "Error: unauthorized");
         }
 
         GameData newGame = new GameData(
                 gameAccess.getAllGames().size() + 1,
-                "",
-                "",
+                null,
+                null,
                 req.gameName(),
                 new ChessGame()
         );
@@ -58,5 +54,21 @@ public class GameService {
         }
 
         return new CreateGameResponse(newGame.gameID(), null);
+    }
+
+    public JoinGameResponse joinGame(JoinGameRequest req) {
+        AuthData auth = authAccess.getAuth(req.authToken());
+        if (auth == null) {
+            return new JoinGameResponse("Error: unauthorized");
+        }
+
+        String updateMessage = gameAccess.updateGame(req.playerColor(), req.gameID(), auth.username());
+        if (updateMessage != null) {
+            return new JoinGameResponse(updateMessage);
+        }
+
+        return new JoinGameResponse(null);
+
+
     }
 }
