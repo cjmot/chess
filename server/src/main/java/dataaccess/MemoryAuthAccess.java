@@ -1,15 +1,15 @@
 package dataaccess;
 import model.AuthData;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public class MemoryAuthAccess implements UserAccess {
 
-    private Collection<AuthData> authData;
+    private Set<AuthData> authData;
 
     public MemoryAuthAccess() {
-        authData = new ArrayList<>();
+        authData = new HashSet<>();
     }
 
     public String clear() {
@@ -17,16 +17,7 @@ public class MemoryAuthAccess implements UserAccess {
         return null;
     }
 
-    public AuthData getAuthByToken(String token) {
-        for (AuthData auth : authData) {
-            if (auth.authToken().equals(token)){
-                return auth;
-            }
-        }
-        return null;
-    }
-
-    public Collection<AuthData> getAuthData() {
+    public Set<AuthData> getAllAuth() {
         return authData;
     }
 

@@ -2,12 +2,12 @@ package dataaccess;
 
 import model.UserData;
 
-import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 
 public class MemoryUserAccess implements UserAccess {
 
-    private Collection<UserData> userData;
+    private Set<UserData> userData;
 
     public MemoryUserAccess() {
         userData = new HashSet<>();
@@ -36,7 +36,7 @@ public class MemoryUserAccess implements UserAccess {
         return null;
     }
 
-    public Collection<UserData> getAllUsers() {
+    public Set<UserData> getAllUsers() {
         return userData;
     }
 

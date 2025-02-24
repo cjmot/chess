@@ -2,15 +2,15 @@ package dataaccess;
 
 import model.GameData;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public class MemoryGameAccess implements UserAccess {
 
-    private Collection<GameData> gameData;
+    private Set<GameData> gameData;
 
     public MemoryGameAccess() {
-        gameData = new ArrayList<>();
+        gameData = new HashSet<>();
     }
 
     public String clear() {
@@ -27,7 +27,7 @@ public class MemoryGameAccess implements UserAccess {
         return null;
     }
 
-    public Collection<GameData> getGameData() {
+    public Set<GameData> getAllGames() {
         return gameData;
     }
 

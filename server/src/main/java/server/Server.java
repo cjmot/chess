@@ -1,11 +1,8 @@
 package server;
 
-import com.google.gson.Gson;
 import dataaccess.MemoryGameAccess;
 import dataaccess.MemoryUserAccess;
 import dataaccess.MemoryAuthAccess;
-import dto.*;
-import model.UserData;
 import service.*;
 import spark.*;
 
@@ -19,7 +16,6 @@ public class Server {
     private final UserService userService;
     private final AuthService authService;
     private final GameService gameService;
-    private final Gson gson;
 
     public Server() {
         otherHandler = new OtherHandler();
@@ -30,7 +26,6 @@ public class Server {
         userService = new UserService();
         gameService = new GameService();
         authService = new AuthService();
-        gson = new Gson();
     }
 
     public int run(int desiredPort) {
@@ -63,7 +58,7 @@ public class Server {
 
     private void setVariables() {
         userService.setAccess(userAccess, authAccess);
-        gameService.setGameAccess(gameAccess);
+        gameService.setGameAccess(gameAccess, authAccess);
         authService.setAuthAccess(userAccess, gameAccess, authAccess);
         otherHandler.setServices(authService);
         sessionHandler.setServices(userService);

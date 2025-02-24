@@ -8,6 +8,9 @@ import dto.*;
 import model.*;
 import org.junit.jupiter.api.*;
 
+import java.util.Collection;
+import java.util.Set;
+
 public class ServiceTests {
 
     private static UserService userService;
@@ -28,7 +31,7 @@ public class ServiceTests {
         gameAccess = new MemoryGameAccess();
         authAccess = new MemoryAuthAccess();
         userService.setAccess(userAccess, authAccess);
-        gameService.setGameAccess(gameAccess);
+        gameService.setGameAccess(gameAccess, authAccess);
         authService.setAuthAccess(userAccess, gameAccess, authAccess);
     }
 
@@ -54,8 +57,8 @@ public class ServiceTests {
         Assertions.assertEquals(expected, result);
 
         Assertions.assertEquals(0, userAccess.getAllUsers().size());
-        Assertions.assertEquals(0, gameAccess.getGameData().size());
-        Assertions.assertEquals(0, authAccess.getAuthData().size());
+        Assertions.assertEquals(0, gameAccess.getAllGames().size());
+        Assertions.assertEquals(0, authAccess.getAllAuth().size());
     }
 
     @Test
@@ -112,7 +115,7 @@ public class ServiceTests {
         LogoutResponse result = userService.logout(new LogoutRequest("token"));
 
         Assertions.assertEquals(expected, result);
-        Assertions.assertTrue(authAccess.getAuthData().isEmpty());
+        Assertions.assertTrue(authAccess.getAllAuth().isEmpty());
     }
 
     @Test
@@ -125,5 +128,27 @@ public class ServiceTests {
         LogoutResponse result = userService.logout(new LogoutRequest("wrong token"));
 
         Assertions.assertEquals(expected, result.message());
+    }
+
+    @Test
+    @DisplayName("Valid list games")
+    public void validListGames() {
+        userAccess.addUser(normalUser);
+        authAccess.addAuth(new AuthData("username", "authToken"));
+        Set<GameData> games = Set.of(
+                new GameData(1, "white1", "black1", "game1", new ChessGame()),
+                new GameData(2, "white2", "black2", "game2", new ChessGame()),
+                new GameData(3, "white3", "black3", "game3", new ChessGame()),
+                new GameData(4, "white4", "black4", "game4", new ChessGame()),
+                new GameData(5, "white5", "black5", "game5", new ChessGame())
+        );
+        for (GameData game : games) {
+            gameAccess.addGame(game);
+        }
+
+        ListGamesResponse expected = new ListGamesResponse(games, null);
+        ListGamesResponse result = gameService.listGames(new ListGamesRequest("authToken"));
+
+        Assertions.assertEquals(expected.games(), result.games());
     }
 }
