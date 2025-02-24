@@ -43,6 +43,11 @@ public class MemoryAuthAccess implements UserAccess {
     }
 
     public boolean getAuth(String token) {
-        return authData.stream().anyMatch(auth -> auth.authToken().equals(token));
+        for (AuthData auth : authData) {
+            if (auth.authToken().equals(token)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -31,7 +31,10 @@ public class MemoryGameAccess implements UserAccess {
         return gameData;
     }
 
-    public boolean addGame(GameData game) {
-        return gameData.add(game);
+    public String addGame(GameData game) {
+        if (!gameData.add(game)) {
+            return "Failed to add game";
+        }
+        return null;
     }
 }

@@ -10,6 +10,7 @@ public class Server {
 
     private final OtherHandler otherHandler;
     private final SessionHandler sessionHandler;
+    private final GameHandler gameHandler;
     private final MemoryUserAccess userAccess;
     private final MemoryGameAccess gameAccess;
     private final MemoryAuthAccess authAccess;
@@ -20,6 +21,7 @@ public class Server {
     public Server() {
         otherHandler = new OtherHandler();
         sessionHandler = new SessionHandler();
+        gameHandler = new GameHandler();
         userAccess = new MemoryUserAccess();
         gameAccess = new MemoryGameAccess();
         authAccess = new MemoryAuthAccess();
@@ -44,6 +46,10 @@ public class Server {
 
         Spark.delete("/session", sessionHandler::logout);
 
+        Spark.get("/game", gameHandler::listGames);
+
+        Spark.post("/game", gameHandler::createGame);
+
         //This line initializes the server and can be removed once you have a functioning endpoint 
         Spark.init();
 
@@ -60,7 +66,8 @@ public class Server {
         userService.setAccess(userAccess, authAccess);
         gameService.setGameAccess(gameAccess, authAccess);
         authService.setAuthAccess(userAccess, gameAccess, authAccess);
-        otherHandler.setServices(authService);
-        sessionHandler.setServices(userService);
+        otherHandler.setService(authService);
+        sessionHandler.setService(userService);
+        gameHandler.setService(gameService);
     }
 }

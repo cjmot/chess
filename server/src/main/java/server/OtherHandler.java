@@ -17,7 +17,7 @@ public class OtherHandler {
         gson = new Gson();
     }
 
-    public void setServices(AuthService authService) {
+    public void setService(AuthService authService) {
         this.authService = authService;
     }
 

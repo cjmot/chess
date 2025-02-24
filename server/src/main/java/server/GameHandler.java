@@ -1,33 +1,32 @@
 package server;
 
 import com.google.gson.Gson;
-import dto.LoginRequest;
-import dto.LoginResponse;
-import dto.LogoutRequest;
-import dto.LogoutResponse;
-import model.UserData;
-import service.UserService;
+import dto.CreateGameRequest;
+import dto.CreateGameResponse;
+import dto.ListGamesRequest;
+import dto.ListGamesResponse;
+import model.GameData;
+import service.GameService;
 import spark.Request;
 import spark.Response;
 
-public class SessionHandler {
+public class GameHandler {
 
-    private UserService userService;
+    private GameService gameService;
     private final Gson gson;
 
-    public SessionHandler() {
-        userService = null;
+    public GameHandler() {
+        gameService = null;
         gson = new Gson();
     }
 
-    public void setService(UserService userService) {
-        this.userService = userService;
+    public void setService(GameService gameService) {
+        this.gameService = gameService;
     }
 
-    public String login(Request req, Response res) {
-        UserData user = gson.fromJson(req.body(), UserData.class);
-        LoginResponse response = userService.login(new LoginRequest(user));
-
+    public String listGames(Request req, Response res) {
+        String token = gson.fromJson(req.headers("authorization"), String.class);
+        ListGamesResponse response = gameService.listGames(new ListGamesRequest(token));
         if (response.message() != null) {
             if (response.message().contains("unauthorized")) {
                 res.status(401);
@@ -35,15 +34,14 @@ public class SessionHandler {
         } else {
             res.status(200);
         }
-
         res.type("application/json");
         return gson.toJson(response);
     }
 
-    public String logout(Request req, Response res) {
+    public String createGame(Request req, Response res) {
         String token = gson.fromJson(req.headers("authorization"), String.class);
-        LogoutResponse response = userService.logout(new LogoutRequest(token));
-
+        String gameName = gson.fromJson(req.body(), GameData.class).gameName();
+        CreateGameResponse response = gameService.createGame(new CreateGameRequest(gameName, token));
         if (response.message() != null) {
             if (response.message().contains("unauthorized")) {
                 res.status(401);
@@ -51,7 +49,6 @@ public class SessionHandler {
         } else {
             res.status(200);
         }
-
         res.type("application/json");
         return gson.toJson(response);
     }
