@@ -53,7 +53,7 @@ public class AuthService {
             return new RegisterResponse(null, null, addedMessage);
         }
 
-        AuthData newAuth = new AuthData(UUID.randomUUID().toString(), req.user().username());
+        AuthData newAuth = new AuthData(req.user().username(), UUID.randomUUID().toString());
         addedMessage = authAccess.addAuth(newAuth);
         if (addedMessage != null) {
             return new RegisterResponse(null, null, addedMessage);
