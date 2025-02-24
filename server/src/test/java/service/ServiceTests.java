@@ -196,4 +196,31 @@ public class ServiceTests {
 
         Assertions.assertEquals(expected.games(), result.games());
     }
+
+    @Test
+    @DisplayName("Normal join game")
+    public void normalJoinGame() {
+        userAccess.addUser(normalUser);
+        authAccess.addAuth(new AuthData("username", "authToken"));
+        gameService.createGame(new CreateGameRequest("game1", "authToken"));
+
+        JoinGameResponse expected = new JoinGameResponse(null);
+        JoinGameResponse result = gameService.joinGame(new JoinGameRequest("WHITE", 1, "authToken"));
+
+        Assertions.assertEquals(expected, result);
+        Assertions.assertTrue(gameAccess.getAllGames().stream().anyMatch(game -> game.whiteUsername().equals("username")));
+    }
+
+    @Test
+    @DisplayName("Unauthorized join game")
+    public void unauthorizedJoinGame() {
+        userAccess.addUser(normalUser);
+        authAccess.addAuth(new AuthData("username", "authToken"));
+        gameService.createGame(new CreateGameRequest("game1", "authToken"));
+
+        JoinGameResponse expected = new JoinGameResponse("Error: unauthorized");
+        JoinGameResponse result = gameService.joinGame(new JoinGameRequest("WHITE", 1, "wrong authToken"));
+
+        Assertions.assertEquals(expected, result);
+    }
 }
