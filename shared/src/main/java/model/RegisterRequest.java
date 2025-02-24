@@ -1,5 +1,3 @@
-package dto;
-
-import model.UserData;
+package model;
 
 public record RegisterRequest(UserData user) { }

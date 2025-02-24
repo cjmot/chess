@@ -1,6 +1,4 @@
-package dto;
-
-import model.GameData;
+package model;
 
 import java.util.Collection;
 

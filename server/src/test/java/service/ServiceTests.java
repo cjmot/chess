@@ -4,7 +4,6 @@ import chess.ChessGame;
 import dataaccess.MemoryAuthAccess;
 import dataaccess.MemoryGameAccess;
 import dataaccess.MemoryUserAccess;
-import dto.*;
 import model.*;
 import org.junit.jupiter.api.*;
 

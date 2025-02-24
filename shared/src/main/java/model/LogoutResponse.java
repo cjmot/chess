@@ -1,3 +1,3 @@
-package dto;
+package model;
 
 public record LogoutResponse(String message) { }

@@ -3,9 +3,7 @@ package service;
 import chess.ChessGame;
 import dataaccess.MemoryAuthAccess;
 import dataaccess.MemoryGameAccess;
-import dto.*;
-import model.AuthData;
-import model.GameData;
+import model.*;
 
 import java.util.Set;
 

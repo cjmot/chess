@@ -1,9 +1,9 @@
 package server;
 
 import com.google.gson.Gson;
-import dto.ClearResponse;
-import dto.RegisterRequest;
-import dto.RegisterResponse;
+import model.ClearResponse;
+import model.RegisterRequest;
+import model.RegisterResponse;
 import model.UserData;
 import service.*;
 import spark.Request;
