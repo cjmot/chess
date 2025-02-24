@@ -2,36 +2,63 @@ package service;
 
 import dataaccess.*;
 import dto.ClearResponse;
+import dto.RegisterRequest;
+import dto.RegisterResponse;
 import model.AuthData;
 
 import java.util.UUID;
 
 public class AuthService {
 
+    private MemoryUserAccess userAccess;
+    private MemoryGameAccess gameAccess;
     private MemoryAuthAccess authAccess;
 
     public AuthService() {
+        userAccess = null;
+        gameAccess = null;
         authAccess = null;
     }
 
-    public ClearResponse clearAuthData() {
-        return new ClearResponse(authAccess.clear());
-    }
-
-    public void setAuthAccess(MemoryAuthAccess authAccess) {
+    public void setAuthAccess(MemoryUserAccess userAccess, MemoryGameAccess gameAccess, MemoryAuthAccess authAccess) {
+        this.userAccess = userAccess;
+        this.gameAccess = gameAccess;
         this.authAccess = authAccess;
     }
 
-    public AuthData createAuth(String username) {
-        String authToken = UUID.randomUUID().toString();
-        return authAccess.addAuth(new AuthData(username, authToken));
+    public ClearResponse clear() {
+        ClearResponse response = new ClearResponse(null);
+
+        String userMessage = userAccess.clear();
+        String gameMessage = gameAccess.clear();
+        String authMessage = authAccess.clear();
+
+        if (userMessage != null) {
+            response = new ClearResponse(userMessage);
+        } else if (gameMessage != null) {
+            response = new ClearResponse(gameMessage);
+        } else if (authMessage != null) {
+            response = new ClearResponse(authMessage);
+        }
+        return response;
     }
 
-    public String deleteAuth(String auth) {
-        return authAccess.deleteAuth(auth);
-    }
+    public RegisterResponse register(RegisterRequest req) {
+        if (userAccess.getUser(req.user().username()) != null) {
+            return new RegisterResponse(null, null, "Error: already taken");
+        }
 
-    public boolean verifyAuth(String token) {
-        return authAccess.getAuth(token);
+        String addedMessage = userAccess.addUser(req.user());
+        if (addedMessage != null) {
+            return new RegisterResponse(null, null, addedMessage);
+        }
+
+        AuthData newAuth = new AuthData(UUID.randomUUID().toString(), req.user().username());
+        addedMessage = authAccess.addAuth(newAuth);
+        if (addedMessage != null) {
+            return new RegisterResponse(null, null, addedMessage);
+        }
+
+        return new RegisterResponse(newAuth.username(), newAuth.authToken(), null);
     }
 }

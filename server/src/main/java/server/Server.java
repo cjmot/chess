@@ -43,11 +43,11 @@ public class Server {
         // Register your endpoints and handle exceptions here.
         Spark.delete("/db", (_, res) -> otherHandler.handleClear(res));
 
-        Spark.post("/user", this::register);
+        Spark.post("/user", otherHandler::handleRegister);
 
-        Spark.post("/session", this::login);
+        Spark.post("/session", sessionHandler::login);
 
-        Spark.delete("/session", this::logout);
+        Spark.delete("/session", sessionHandler::logout);
 
         //This line initializes the server and can be removed once you have a functioning endpoint 
         Spark.init();
@@ -62,56 +62,10 @@ public class Server {
     }
 
     private void setVariables() {
-        userService.setUserAccess(userAccess);
+        userService.setAccess(userAccess, authAccess);
         gameService.setGameAccess(gameAccess);
-        authService.setAuthAccess(authAccess);
-        otherHandler.setServices(userService, gameService, authService);
-        sessionHandler.setServices(userService, authService);
-    }
-
-    private String register(Request req, Response res) {
-        UserData user = gson.fromJson(req.body(), UserData.class);
-        RegisterResponse response = otherHandler.handleRegister(new RegisterRequest(user));
-        if (response.message() != null) {
-            if (response.message().contains("bad request")) {
-                res.status(400);
-            } else if (response.message().contains("already taken")) {
-                res.status(403);
-            } else res.status(500);
-        } else {
-            res.status(200);
-        }
-        res.type("application/json");
-        return gson.toJson(response);
-    }
-
-    private String login(Request req, Response res) {
-        UserData user = gson.fromJson(req.body(), UserData.class);
-        LoginResponse response = sessionHandler.login(new LoginRequest(user));
-        if (response.message() != null) {
-            if (response.message().contains("unauthorized")) {
-                res.status(401);
-            }
-            else res.status(500);
-        } else {
-            res.status(200);
-        }
-        res.type("application/json");
-        return gson.toJson(response);
-    }
-
-    private String logout(Request req, Response res) {
-        String token = gson.fromJson(req.headers("authorization"), String.class);
-        LogoutResponse response = sessionHandler.logout(new LogoutRequest(token));
-        if (response.message() != null) {
-            if (response.message().contains("unauthorized")) {
-                res.status(401);
-            }
-            else res.status(500);
-        } else {
-            res.status(200);
-        }
-        res.type("application/json");
-        return gson.toJson(response);
+        authService.setAuthAccess(userAccess, gameAccess, authAccess);
+        otherHandler.setServices(authService);
+        sessionHandler.setServices(userService);
     }
 }

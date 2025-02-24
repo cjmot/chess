@@ -30,11 +30,11 @@ public class MemoryAuthAccess implements UserAccess {
         return authData;
     }
 
-    public AuthData addAuth(AuthData newAuth) {
+    public String addAuth(AuthData newAuth) {
         if (!authData.add(newAuth)) {
-            return null;
+            return "Failed to add auth";
         }
-        return newAuth;
+        return null;
     }
 
     public String deleteAuth(String token) {

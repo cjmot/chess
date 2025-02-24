@@ -1,41 +1,58 @@
 package server;
 
+import com.google.gson.Gson;
 import dto.LoginRequest;
 import dto.LoginResponse;
 import dto.LogoutRequest;
 import dto.LogoutResponse;
-import model.AuthData;
-import service.AuthService;
+import model.UserData;
 import service.UserService;
+import spark.Request;
+import spark.Response;
 
 public class SessionHandler {
 
-    private AuthService authService;
     private UserService userService;
+    private final Gson gson;
 
     public SessionHandler() {
-        authService = null;
         userService = null;
+        gson = new Gson();
     }
 
-    public void setServices(UserService userService, AuthService authService) {
+    public void setServices(UserService userService) {
         this.userService = userService;
-        this.authService = authService;
     }
 
-    public LoginResponse login(LoginRequest req) {
-        if (userService.getUser(req.user().username(), req.user().password()) == null) {
-            return new LoginResponse(null, null, "Error: unauthorized");
+    public String login(Request req, Response res) {
+        UserData user = gson.fromJson(req.body(), UserData.class);
+        LoginResponse response = userService.login(new LoginRequest(user));
+
+        if (response.message() != null) {
+            if (response.message().contains("unauthorized")) {
+                res.status(401);
+            } else res.status(500);
+        } else {
+            res.status(200);
         }
 
-        AuthData newAuth = authService.createAuth(req.user().username());
-        return new LoginResponse(newAuth.username(), newAuth.authToken(), null);
+        res.type("application/json");
+        return gson.toJson(response);
     }
 
-    public LogoutResponse logout(LogoutRequest req) {
-        if (!authService.verifyAuth(req.authToken())) {
-            return new LogoutResponse("Error: unauthorized");
+    public String logout(Request req, Response res) {
+        String token = gson.fromJson(req.headers("authorization"), String.class);
+        LogoutResponse response = userService.logout(new LogoutRequest(token));
+
+        if (response.message() != null) {
+            if (response.message().contains("unauthorized")) {
+                res.status(401);
+            } else res.status(500);
+        } else {
+            res.status(200);
         }
-        return new LogoutResponse(authService.deleteAuth(req.authToken()));
+
+        res.type("application/json");
+        return gson.toJson(response);
     }
 }

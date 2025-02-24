@@ -4,7 +4,7 @@ import chess.ChessGame;
 import dataaccess.MemoryAuthAccess;
 import dataaccess.MemoryGameAccess;
 import dataaccess.MemoryUserAccess;
-import dto.ClearResponse;
+import dto.*;
 import model.*;
 import org.junit.jupiter.api.*;
 
@@ -17,7 +17,7 @@ public class ServiceTests {
     private static MemoryGameAccess gameAccess;
     private static MemoryAuthAccess authAccess;
 
-    private static final UserData normalUser = new UserData("boogy", "down", "hard");
+    private static final UserData normalUser = new UserData("username", "password", "email");
 
     @BeforeAll
     public static void init() {
@@ -27,13 +27,13 @@ public class ServiceTests {
         userAccess = new MemoryUserAccess();
         gameAccess = new MemoryGameAccess();
         authAccess = new MemoryAuthAccess();
-        userService.setUserAccess(userAccess);
+        userService.setAccess(userAccess, authAccess);
         gameService.setGameAccess(gameAccess);
-        authService.setAuthAccess(authAccess);
+        authService.setAuthAccess(userAccess, gameAccess, authAccess);
     }
 
-    @AfterAll
-    public static void close() {
+    @AfterEach
+    public void close() {
         userAccess.clear();
         gameAccess.clear();
         authAccess.clear();
@@ -42,18 +42,16 @@ public class ServiceTests {
     @Test
     @DisplayName("Clear all data")
     public void clearAllData() {
-        UserData user = new UserData("boogy", "down", "a lot");
         GameData game = new GameData(1, "white", "black", "game1", new ChessGame());
         AuthData auth = new AuthData("username", "authToken");
-        userAccess.addUser(user);
+        userAccess.addUser(normalUser);
         gameAccess.addGame(game);
         authAccess.addAuth(auth);
 
         ClearResponse expected = new ClearResponse(null);
+        ClearResponse result = authService.clear();
 
-        Assertions.assertEquals(expected, userService.clearUserData());
-        Assertions.assertEquals(expected, authService.clearAuthData());
-        Assertions.assertEquals(expected, gameService.clearGameData());
+        Assertions.assertEquals(expected, result);
 
         Assertions.assertEquals(0, userAccess.getAllUsers().size());
         Assertions.assertEquals(0, gameAccess.getGameData().size());
@@ -63,7 +61,7 @@ public class ServiceTests {
     @Test
     @DisplayName("Register normal user")
     public void registerNormalUser() {
-        userService.createUser(normalUser);
+        authService.register(new RegisterRequest(normalUser));
 
         Assertions.assertTrue(userAccess.getAllUsers().contains(normalUser));
     }
@@ -71,30 +69,61 @@ public class ServiceTests {
     @Test
     @DisplayName("Username already exists")
     public void registerUserExists() {
-        userService.createUser(normalUser);
+        authService.register(new RegisterRequest(normalUser));
+        RegisterResponse expected = new RegisterResponse(
+                null, null, "Error: already taken");
+        RegisterResponse result = authService.register(new RegisterRequest(normalUser));
 
-        Assertions.assertEquals("Failed to add user", userService.createUser(normalUser));
+        Assertions.assertEquals(expected, result);
     }
 
     @Test
     @DisplayName("Normal login")
     public void normalLogin() {
         userAccess.addUser(normalUser);
-        UserData user = userService.getUser(normalUser.username(), normalUser.password());
-        AuthData auth = authService.createAuth(user.username());
+        UserData user = new UserData("username", "password", null);
+        String expected = "username";
+        LoginResponse result = userService.login(new LoginRequest(user));
 
-        Assertions.assertEquals(normalUser, user);
-        Assertions.assertEquals(normalUser.username(), auth.username());
-        Assertions.assertNotNull(auth.authToken());
+        Assertions.assertNull(result.message());
+        Assertions.assertNotNull(result.authToken());
+        Assertions.assertEquals(expected, result.username());
+    }
+
+    @Test
+    @DisplayName("Unauthorized login")
+    public void unauthorizedLogin() {
+        userAccess.addUser(normalUser);
+        UserData user = new UserData("username", "wrong password", null);
+        String expected = "Error: unauthorized";
+        LoginResponse result = userService.login(new LoginRequest(user));
+
+        Assertions.assertEquals(expected, result.message());
+        Assertions.assertNull(result.username(), result.authToken());
     }
 
     @Test
     @DisplayName("Normal logout")
     public void normalLogout() {
         userAccess.addUser(normalUser);
-        AuthData auth = authService.createAuth(normalUser.username());
+        authAccess.addAuth(new AuthData("username", "token"));
 
-        Assertions.assertNull(authService.deleteAuth(auth.authToken()));
+        LogoutResponse expected = new LogoutResponse(null);
+        LogoutResponse result = userService.logout(new LogoutRequest("token"));
+
+        Assertions.assertEquals(expected, result);
         Assertions.assertTrue(authAccess.getAuthData().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Unauthorized logout")
+    public void unauthorizedLogout() {
+        userAccess.addUser(normalUser);
+        authAccess.addAuth(new AuthData("username", "token"));
+
+        String expected = "Error: unauthorized";
+        LogoutResponse result = userService.logout(new LogoutRequest("wrong token"));
+
+        Assertions.assertEquals(expected, result.message());
     }
 }
