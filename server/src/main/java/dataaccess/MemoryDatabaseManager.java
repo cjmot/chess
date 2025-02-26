@@ -1,11 +1,11 @@
 package dataaccess;
 
-public class DatabaseManager {
+public class MemoryDatabaseManager {
     private final MemoryUserAccess userAccess;
     private final MemoryGameAccess gameAccess;
     private final MemoryAuthAccess authAccess;
 
-    public DatabaseManager() {
+    public MemoryDatabaseManager() {
         userAccess = new MemoryUserAccess();
         gameAccess = new MemoryGameAccess();
         authAccess = new MemoryAuthAccess();

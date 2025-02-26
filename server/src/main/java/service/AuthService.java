@@ -3,7 +3,7 @@ package service;
 import dataaccess.MemoryUserAccess;
 import dataaccess.MemoryGameAccess;
 import dataaccess.MemoryAuthAccess;
-import dataaccess.DatabaseManager;
+import dataaccess.MemoryDatabaseManager;
 import dto.ClearResponse;
 import dto.RegisterRequest;
 import dto.RegisterResponse;
@@ -17,7 +17,7 @@ public class AuthService {
     private final MemoryGameAccess gameAccess;
     private final MemoryAuthAccess authAccess;
 
-    public AuthService(DatabaseManager dbManager) {
+    public AuthService(MemoryDatabaseManager dbManager) {
         userAccess = dbManager.userAccess();
         gameAccess = dbManager.gameAccess();
         authAccess = dbManager.authAccess();

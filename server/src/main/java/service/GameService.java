@@ -1,7 +1,7 @@
 package service;
 
 import chess.ChessGame;
-import dataaccess.DatabaseManager;
+import dataaccess.MemoryDatabaseManager;
 import dataaccess.MemoryAuthAccess;
 import dataaccess.MemoryGameAccess;
 import dto.ListGamesRequest;
@@ -19,7 +19,7 @@ public class GameService {
     private final MemoryGameAccess gameAccess;
     private final MemoryAuthAccess authAccess;
 
-    public GameService(DatabaseManager dbManager) {
+    public GameService(MemoryDatabaseManager dbManager) {
         gameAccess = dbManager.gameAccess();
         authAccess = dbManager.authAccess();
     }

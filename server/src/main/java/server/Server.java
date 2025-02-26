@@ -1,6 +1,6 @@
 package server;
 
-import dataaccess.DatabaseManager;
+import dataaccess.MemoryDatabaseManager;
 import service.AuthService;
 import service.GameService;
 import service.UserService;
@@ -13,7 +13,7 @@ public class Server {
     private final GameHandler gameHandler;
 
     public Server() {
-        DatabaseManager dbManager = new DatabaseManager();
+        MemoryDatabaseManager dbManager = new MemoryDatabaseManager();
         UserService userService = new UserService(dbManager);
         GameService gameService = new GameService(dbManager);
         AuthService authService = new AuthService(dbManager);

@@ -1,7 +1,7 @@
 package service;
 
 import chess.ChessGame;
-import dataaccess.DatabaseManager;
+import dataaccess.MemoryDatabaseManager;
 import dto.*;
 import model.*;
 import org.junit.jupiter.api.*;
@@ -13,13 +13,13 @@ public class ServiceTests {
     private static UserService userService;
     private static GameService gameService;
     private static AuthService authService;
-    private static DatabaseManager dbManager;
+    private static MemoryDatabaseManager dbManager;
 
     private static UserData normalUser;
 
     @BeforeAll
     public static void init() {
-        dbManager = new DatabaseManager();
+        dbManager = new MemoryDatabaseManager();
         userService = new UserService(dbManager);
         gameService = new GameService(dbManager);
         authService = new AuthService(dbManager);

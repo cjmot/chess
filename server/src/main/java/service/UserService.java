@@ -1,6 +1,6 @@
 package service;
 
-import dataaccess.DatabaseManager;
+import dataaccess.MemoryDatabaseManager;
 import dataaccess.MemoryAuthAccess;
 import dataaccess.MemoryUserAccess;
 import dto.LoginRequest;
@@ -17,7 +17,7 @@ public class UserService {
     private final MemoryUserAccess userAccess;
     private final MemoryAuthAccess authAccess;
 
-    public UserService(DatabaseManager dbManager) {
+    public UserService(MemoryDatabaseManager dbManager) {
         userAccess = dbManager.userAccess();
         authAccess = dbManager.authAccess();
     }
