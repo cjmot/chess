@@ -14,10 +14,10 @@ public class AuthService {
     private MemoryGameAccess gameAccess;
     private MemoryAuthAccess authAccess;
 
-    public AuthService() {
-        userAccess = null;
-        gameAccess = null;
-        authAccess = null;
+    public AuthService(DatabaseManager dbManager) {
+        userAccess = dbManager.userAccess();
+        gameAccess = dbManager.gameAccess();
+        authAccess = dbManager.authAccess();
     }
 
     public void setAuthAccess(MemoryUserAccess userAccess, MemoryGameAccess gameAccess, MemoryAuthAccess authAccess) {

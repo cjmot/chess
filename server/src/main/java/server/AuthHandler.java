@@ -11,16 +11,12 @@ import spark.Response;
 
 public class AuthHandler implements Handler {
 
-    private AuthService authService;
+    private final AuthService authService;
     private final Gson gson;
 
-    public AuthHandler() {
-        authService = null;
-        gson = new Gson();
-    }
-
-    public void setService(AuthService authService) {
+    public AuthHandler(AuthService authService) {
         this.authService = authService;
+        gson = new Gson();
     }
 
     public String handleClear(Request req, Response res) {

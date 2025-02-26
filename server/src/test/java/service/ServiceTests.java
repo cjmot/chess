@@ -1,9 +1,7 @@
 package service;
 
 import chess.ChessGame;
-import dataaccess.MemoryAuthAccess;
-import dataaccess.MemoryGameAccess;
-import dataaccess.MemoryUserAccess;
+import dataaccess.DatabaseManager;
 import dto.*;
 import model.*;
 import org.junit.jupiter.api.*;
@@ -15,31 +13,24 @@ public class ServiceTests {
     private static UserService userService;
     private static GameService gameService;
     private static AuthService authService;
-    private static MemoryUserAccess userAccess;
-    private static MemoryGameAccess gameAccess;
-    private static MemoryAuthAccess authAccess;
+    private static DatabaseManager dbManager;
 
     private static UserData normalUser;
 
     @BeforeAll
     public static void init() {
-        userService = new UserService();
-        gameService = new GameService();
-        authService = new AuthService();
-        userAccess = new MemoryUserAccess();
-        gameAccess = new MemoryGameAccess();
-        authAccess = new MemoryAuthAccess();
-        userService.setAccess(userAccess, authAccess);
-        gameService.setGameAccess(gameAccess, authAccess);
-        authService.setAuthAccess(userAccess, gameAccess, authAccess);
+        dbManager = new DatabaseManager();
+        userService = new UserService(dbManager);
+        gameService = new GameService(dbManager);
+        authService = new AuthService(dbManager);
         normalUser = new UserData("username", "password", "email");
     }
 
     @AfterEach
     public void close() {
-        userAccess.clear();
-        gameAccess.clear();
-        authAccess.clear();
+        dbManager.userAccess().clear();
+        dbManager.gameAccess().clear();
+        dbManager.authAccess().clear();
     }
 
     @Test
@@ -47,18 +38,18 @@ public class ServiceTests {
     public void clearAllData() {
         GameData game = new GameData(1, "white", "black", "game1", new ChessGame());
         AuthData auth = new AuthData("username", "authToken");
-        userAccess.addUser(normalUser);
-        gameAccess.addGame(game);
-        authAccess.addAuth(auth);
+        dbManager.userAccess().addUser(normalUser);
+        dbManager.gameAccess().addGame(game);
+        dbManager.authAccess().addAuth(auth);
 
         ClearResponse expected = new ClearResponse(null);
         ClearResponse result = authService.clear();
 
         Assertions.assertEquals(expected, result);
 
-        Assertions.assertEquals(0, userAccess.getAllUsers().size());
-        Assertions.assertEquals(0, gameAccess.getAllGames().size());
-        Assertions.assertEquals(0, authAccess.getAllAuth().size());
+        Assertions.assertEquals(0, dbManager.userAccess().getAllUsers().size());
+        Assertions.assertEquals(0, dbManager.gameAccess().getAllGames().size());
+        Assertions.assertEquals(0, dbManager.authAccess().getAllAuth().size());
     }
 
     @Test
@@ -66,7 +57,7 @@ public class ServiceTests {
     public void registerNormalUser() {
         authService.register(new RegisterRequest(normalUser));
 
-        Assertions.assertTrue(userAccess.getAllUsers().contains(normalUser));
+        Assertions.assertTrue(dbManager.userAccess().getAllUsers().contains(normalUser));
     }
 
     @Test
@@ -83,7 +74,7 @@ public class ServiceTests {
     @Test
     @DisplayName("Normal login")
     public void normalLogin() {
-        userAccess.addUser(normalUser);
+        dbManager.userAccess().addUser(normalUser);
         UserData user = new UserData("username", "password", null);
         String expected = "username";
         LoginResponse result = userService.login(new LoginRequest(user));
@@ -96,7 +87,7 @@ public class ServiceTests {
     @Test
     @DisplayName("Unauthorized login")
     public void unauthorizedLogin() {
-        userAccess.addUser(normalUser);
+        dbManager.userAccess().addUser(normalUser);
         UserData user = new UserData("username", "wrong password", null);
         String expected = "Error: unauthorized";
         LoginResponse result = userService.login(new LoginRequest(user));
@@ -108,21 +99,21 @@ public class ServiceTests {
     @Test
     @DisplayName("Normal logout")
     public void normalLogout() {
-        userAccess.addUser(normalUser);
-        authAccess.addAuth(new AuthData("username", "token"));
+        dbManager.userAccess().addUser(normalUser);
+        dbManager.authAccess().addAuth(new AuthData("username", "token"));
 
         LogoutResponse expected = new LogoutResponse(null);
         LogoutResponse result = userService.logout(new LogoutRequest("token"));
 
         Assertions.assertEquals(expected, result);
-        Assertions.assertTrue(authAccess.getAllAuth().isEmpty());
+        Assertions.assertTrue(dbManager.authAccess().getAllAuth().isEmpty());
     }
 
     @Test
     @DisplayName("Unauthorized logout")
     public void unauthorizedLogout() {
-        userAccess.addUser(normalUser);
-        authAccess.addAuth(new AuthData("username", "token"));
+        dbManager.userAccess().addUser(normalUser);
+        dbManager.authAccess().addAuth(new AuthData("username", "token"));
 
         String expected = "Error: unauthorized";
         LogoutResponse result = userService.logout(new LogoutRequest("wrong token"));
@@ -138,7 +129,7 @@ public class ServiceTests {
         CreateGameResponse expected = new CreateGameResponse(1, null);
         CreateGameResponse result = gameService.createGame(new CreateGameRequest("game1", response.authToken()));
 
-        Assertions.assertEquals(1, gameAccess.getAllGames().size());
+        Assertions.assertEquals(1, dbManager.gameAccess().getAllGames().size());
         Assertions.assertEquals(expected, result);
     }
 
@@ -150,15 +141,15 @@ public class ServiceTests {
         CreateGameResponse expected = new CreateGameResponse(null, "Error: unauthorized");
         CreateGameResponse result = gameService.createGame(new CreateGameRequest("game1", "wrong token"));
 
-        Assertions.assertEquals(0, gameAccess.getAllGames().size());
+        Assertions.assertEquals(0, dbManager.gameAccess().getAllGames().size());
         Assertions.assertEquals(expected, result);
     }
 
     @Test
     @DisplayName("Valid list games")
     public void validListGames() {
-        userAccess.addUser(normalUser);
-        authAccess.addAuth(new AuthData("username", "authToken"));
+        dbManager.userAccess().addUser(normalUser);
+        dbManager.authAccess().addAuth(new AuthData("username", "authToken"));
         Set<GameData> games = Set.of(
                 new GameData(1, "white1", "black1", "game1", new ChessGame()),
                 new GameData(2, "white2", "black2", "game2", new ChessGame()),
@@ -167,7 +158,7 @@ public class ServiceTests {
                 new GameData(5, "white5", "black5", "game5", new ChessGame())
         );
         for (GameData game : games) {
-            gameAccess.addGame(game);
+            dbManager.gameAccess().addGame(game);
         }
 
         ListGamesResponse expected = new ListGamesResponse(games, null);
@@ -179,8 +170,8 @@ public class ServiceTests {
     @Test
     @DisplayName("Unauthorized list games")
     public void unauthorizedListGames() {
-        userAccess.addUser(normalUser);
-        authAccess.addAuth(new AuthData("username", "authToken"));
+        dbManager.userAccess().addUser(normalUser);
+        dbManager.authAccess().addAuth(new AuthData("username", "authToken"));
         Set<GameData> games = Set.of(
                 new GameData(1, "white1", "black1", "game1", new ChessGame()),
                 new GameData(2, "white2", "black2", "game2", new ChessGame()),
@@ -189,7 +180,7 @@ public class ServiceTests {
                 new GameData(5, "white5", "black5", "game5", new ChessGame())
         );
         for (GameData game : games) {
-            gameAccess.addGame(game);
+            dbManager.gameAccess().addGame(game);
         }
 
         ListGamesResponse expected = new ListGamesResponse(null, "Error: unauthorized");
@@ -201,22 +192,25 @@ public class ServiceTests {
     @Test
     @DisplayName("Normal join game")
     public void normalJoinGame() {
-        userAccess.addUser(normalUser);
-        authAccess.addAuth(new AuthData("username", "authToken"));
+        dbManager.userAccess().addUser(normalUser);
+        dbManager.authAccess().addAuth(new AuthData("username", "authToken"));
         gameService.createGame(new CreateGameRequest("game1", "authToken"));
 
         JoinGameResponse expected = new JoinGameResponse(null);
         JoinGameResponse result = gameService.joinGame(new JoinGameRequest("WHITE", 1, "authToken"));
 
         Assertions.assertEquals(expected, result);
-        Assertions.assertTrue(gameAccess.getAllGames().stream().anyMatch(game -> game.whiteUsername().equals("username")));
+        Assertions.assertTrue(
+                dbManager.gameAccess().getAllGames().stream().anyMatch(
+                        game -> game.whiteUsername().equals("username"))
+        );
     }
 
     @Test
     @DisplayName("Unauthorized join game")
     public void unauthorizedJoinGame() {
-        userAccess.addUser(normalUser);
-        authAccess.addAuth(new AuthData("username", "authToken"));
+        dbManager.userAccess().addUser(normalUser);
+        dbManager.authAccess().addAuth(new AuthData("username", "authToken"));
         gameService.createGame(new CreateGameRequest("game1", "authToken"));
 
         JoinGameResponse expected = new JoinGameResponse("Error: unauthorized");

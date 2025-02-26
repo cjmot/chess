@@ -9,16 +9,12 @@ import spark.Response;
 
 public class GameHandler implements Handler {
 
-    private GameService gameService;
+    private final GameService gameService;
     private final Gson gson;
 
-    public GameHandler() {
-        gameService = null;
-        gson = new Gson();
-    }
-
-    public void setService(GameService gameService) {
+    public GameHandler(GameService gameService) {
         this.gameService = gameService;
+        gson = new Gson();
     }
 
     public String listGames(Request req, Response res) {

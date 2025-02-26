@@ -1,5 +1,6 @@
 package service;
 
+import dataaccess.DatabaseManager;
 import dataaccess.MemoryAuthAccess;
 import dataaccess.MemoryUserAccess;
 import dto.LoginRequest;
@@ -16,9 +17,9 @@ public class UserService {
     private MemoryUserAccess userAccess;
     private MemoryAuthAccess authAccess;
 
-    public UserService() {
-        userAccess = null;
-        authAccess = null;
+    public UserService(DatabaseManager dbManager) {
+        userAccess = dbManager.userAccess();
+        authAccess = dbManager.authAccess();
     }
 
     public void setAccess(MemoryUserAccess userAccess, MemoryAuthAccess authAccess) {

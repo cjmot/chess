@@ -12,16 +12,12 @@ import spark.Response;
 
 public class SessionHandler implements Handler {
 
-    private UserService userService;
+    private final UserService userService;
     private final Gson gson;
 
-    public SessionHandler() {
-        userService = null;
-        gson = new Gson();
-    }
-
-    public void setService(UserService userService) {
+    public SessionHandler(UserService userService) {
         this.userService = userService;
+        gson = new Gson();
     }
 
     public String login(Request req, Response res) {
