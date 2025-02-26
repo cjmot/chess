@@ -5,7 +5,7 @@ import dto.ClearResponse;
 import dto.RegisterRequest;
 import dto.RegisterResponse;
 import model.UserData;
-import service.*;
+import service.AuthService;
 import spark.Request;
 import spark.Response;
 

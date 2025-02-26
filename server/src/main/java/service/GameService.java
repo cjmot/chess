@@ -4,24 +4,24 @@ import chess.ChessGame;
 import dataaccess.DatabaseManager;
 import dataaccess.MemoryAuthAccess;
 import dataaccess.MemoryGameAccess;
-import dto.*;
+import dto.ListGamesRequest;
+import dto.ListGamesResponse;
+import dto.CreateGameRequest;
+import dto.CreateGameResponse;
+import dto.JoinGameRequest;
+import dto.JoinGameResponse;
 import model.*;
 
 import java.util.Set;
 
 public class GameService {
 
-    private MemoryGameAccess gameAccess;
-    private MemoryAuthAccess authAccess;
+    private final MemoryGameAccess gameAccess;
+    private final MemoryAuthAccess authAccess;
 
     public GameService(DatabaseManager dbManager) {
         gameAccess = dbManager.gameAccess();
         authAccess = dbManager.authAccess();
-    }
-
-    public void setGameAccess(MemoryGameAccess gameAccess, MemoryAuthAccess authAccess) {
-        this.gameAccess = gameAccess;
-        this.authAccess = authAccess;
     }
 
     public ListGamesResponse listGames(ListGamesRequest req) {

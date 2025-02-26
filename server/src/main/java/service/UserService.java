@@ -14,17 +14,12 @@ import java.util.UUID;
 
 public class UserService {
 
-    private MemoryUserAccess userAccess;
-    private MemoryAuthAccess authAccess;
+    private final MemoryUserAccess userAccess;
+    private final MemoryAuthAccess authAccess;
 
     public UserService(DatabaseManager dbManager) {
         userAccess = dbManager.userAccess();
         authAccess = dbManager.authAccess();
-    }
-
-    public void setAccess(MemoryUserAccess userAccess, MemoryAuthAccess authAccess) {
-        this.userAccess = userAccess;
-        this.authAccess = authAccess;
     }
 
     public LoginResponse login(LoginRequest req) {

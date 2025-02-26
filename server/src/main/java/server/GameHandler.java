@@ -1,8 +1,13 @@
 package server;
 
 import com.google.gson.Gson;
-import dto.*;
-import model.*;
+import dto.ListGamesRequest;
+import dto.ListGamesResponse;
+import dto.CreateGameRequest;
+import dto.CreateGameResponse;
+import dto.JoinGameRequest;
+import dto.JoinGameResponse;
+import model.GameData;
 import service.GameService;
 import spark.Request;
 import spark.Response;

@@ -1,6 +1,9 @@
 package service;
 
-import dataaccess.*;
+import dataaccess.MemoryUserAccess;
+import dataaccess.MemoryGameAccess;
+import dataaccess.MemoryAuthAccess;
+import dataaccess.DatabaseManager;
 import dto.ClearResponse;
 import dto.RegisterRequest;
 import dto.RegisterResponse;
@@ -10,20 +13,14 @@ import java.util.UUID;
 
 public class AuthService {
 
-    private MemoryUserAccess userAccess;
-    private MemoryGameAccess gameAccess;
-    private MemoryAuthAccess authAccess;
+    private final MemoryUserAccess userAccess;
+    private final MemoryGameAccess gameAccess;
+    private final MemoryAuthAccess authAccess;
 
     public AuthService(DatabaseManager dbManager) {
         userAccess = dbManager.userAccess();
         gameAccess = dbManager.gameAccess();
         authAccess = dbManager.authAccess();
-    }
-
-    public void setAuthAccess(MemoryUserAccess userAccess, MemoryGameAccess gameAccess, MemoryAuthAccess authAccess) {
-        this.userAccess = userAccess;
-        this.gameAccess = gameAccess;
-        this.authAccess = authAccess;
     }
 
     public ClearResponse clear() {

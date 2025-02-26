@@ -1,7 +1,9 @@
 package server;
 
 import dataaccess.DatabaseManager;
-import service.*;
+import service.AuthService;
+import service.GameService;
+import service.UserService;
 import spark.*;
 
 public class Server {
