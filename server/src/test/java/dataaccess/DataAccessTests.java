@@ -23,7 +23,7 @@ public class DataAccessTests {
     @Test
     @DisplayName("Configure User Database")
     public void configureUserDatabase() {
-        Assertions.assertDoesNotThrow(SqlDatabaseManager::new);
+        Assertions.assertDoesNotThrow(SqlUserAccess::new);
     }
 
     @Test
@@ -58,5 +58,17 @@ public class DataAccessTests {
     public void clearUserTable() {
         sqlDbManager.userAccess().addUser(normalUser);
         Assertions.assertNull(sqlDbManager.userAccess().clear());
+    }
+
+    @Test
+    @DisplayName("Configure Game Database")
+    public void configureGameDatabase() {
+        Assertions.assertDoesNotThrow(SqlGameAccess::new);
+    }
+
+    @Test
+    @DisplayName("Configure Auth Database")
+    public void configureAuthDatabase() {
+        Assertions.assertDoesNotThrow(SqlAuthAccess::new);
     }
 }
