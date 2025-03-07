@@ -19,7 +19,7 @@ public class SqlUserAccess {
 
     public String clear() {
         try {
-            executeUpdate("DROP TABLE user;");
+            executeUpdate("TRUNCATE TABLE user;");
             return null;
         } catch (ResponseException e) {
             return e.getMessage();
