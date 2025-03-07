@@ -13,4 +13,5 @@ public class SqlDatabaseManager {
     public SqlUserAccess userAccess() {
         return this.userAccess;
     }
+
 }

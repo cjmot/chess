@@ -11,22 +11,36 @@ import java.sql.Statement;
 
 import static java.sql.Types.NULL;
 
-public class SqlUserAccess {
+public class SqlUserAccess implements SqlDataAccess {
 
     public SqlUserAccess() throws ResponseException {
         configureDatabase();
     }
 
-    public String addUser(UserData user) throws ResponseException {
+//    public String clear() {
+//        try {
+//            executeUpdate("DROP TABLE user;");
+//            return null;
+//        } catch (ResponseException e) {
+//            return e.getMessage();
+//        }
+//    }
+
+    public String addUser(UserData user) {
         try {
             var statement = "INSERT INTO user (username, password, email) VALUES (?, ?, ?)";
             var hashedPassword = BCrypt.hashpw(user.password(), BCrypt.gensalt());
             executeUpdate(statement, user.username(), hashedPassword, user.email());
             return null;
         } catch (ResponseException e) {
-            return e.getMessage();
+            if (e.getMessage().contains("Duplicate entry 'username'")) {
+                return "Failed to add user: username already exists";
+            } else if (e.getMessage().contains("Duplicate entry 'email'")) {
+                return "Failed to add user: email already exists";
+            } else {
+                return e.getMessage();
+            }
         }
-
     }
 
     private void configureDatabase() throws ResponseException {
@@ -34,12 +48,10 @@ public class SqlUserAccess {
         try (var conn = DatabaseManager.getConnection()) {
             String createStatement = """
                     CREATE TABLE IF NOT EXISTS user (
-                      `id` int NOT NULL AUTO_INCREMENT,
-                      `username` varchar(256) NOT NULL,
-                      `password` varchar(256) NOT NULL,
-                      `email` varchar(256) NOT NULL,
-                      PRIMARY KEY (`id`),
-                      INDEX(username)
+                      id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                      username varchar(256) UNIQUE NOT NULL,
+                      password varchar(256) UNIQUE NOT NULL,
+                      email varchar(256) UNIQUE NOT NULL
                     );
                     """;
             try (var preparedStatement = conn.prepareStatement(createStatement)) {
