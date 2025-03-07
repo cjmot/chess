@@ -11,20 +11,20 @@ import java.sql.Statement;
 
 import static java.sql.Types.NULL;
 
-public class SqlUserAccess implements SqlDataAccess {
+public class SqlUserAccess {
 
     public SqlUserAccess() throws ResponseException {
         configureDatabase();
     }
 
-//    public String clear() {
-//        try {
-//            executeUpdate("DROP TABLE user;");
-//            return null;
-//        } catch (ResponseException e) {
-//            return e.getMessage();
-//        }
-//    }
+    public String clear() {
+        try {
+            executeUpdate("DROP TABLE user;");
+            return null;
+        } catch (ResponseException e) {
+            return e.getMessage();
+        }
+    }
 
     public String addUser(UserData user) {
         try {

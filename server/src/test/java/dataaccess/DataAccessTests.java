@@ -2,10 +2,7 @@ package dataaccess;
 
 import exception.ResponseException;
 import model.UserData;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class DataAccessTests {
 
@@ -18,6 +15,11 @@ public class DataAccessTests {
         sqlDbManager = new SqlDatabaseManager();
     }
 
+    @AfterAll
+    public static void close() {
+        sqlDbManager.userAccess().clear();
+    }
+
 
     @Test
     @DisplayName("Configure User Database")
@@ -26,8 +28,15 @@ public class DataAccessTests {
     }
 
     @Test
-    @DisplayName("Add a user to User Database")
+    @DisplayName("Add a User to User Database")
     public void addUserToDatabase() {
         Assertions.assertNull(sqlDbManager.userAccess().addUser(normalUser));
+    }
+
+    @Test
+    @DisplayName("Clear User Database")
+    public void clearUserTable() {
+        sqlDbManager.userAccess().addUser(normalUser);
+        Assertions.assertNull(sqlDbManager.userAccess().clear());
     }
 }
