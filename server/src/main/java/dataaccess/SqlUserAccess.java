@@ -5,9 +5,9 @@ import model.GameData;
 import model.UserData;
 import org.mindrot.jbcrypt.BCrypt;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
+import java.util.Collection;
+import java.util.Objects;
 
 import static java.sql.Types.NULL;
 
@@ -41,6 +41,31 @@ public class SqlUserAccess {
                 return e.getMessage();
             }
         }
+    }
+
+    public String getUserByUsername(String username) throws ResponseException {
+        try (var conn = DatabaseManager.getConnection()) {
+            String statement = "SELECT username FROM user WHERE username=?;";
+            try (PreparedStatement ps = conn.prepareStatement(statement)) {
+                ps.setString(1, username);
+                try (var rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        if (Objects.equals(readUser(rs), username)) {
+                            return username;
+                        } else {
+                            return null;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new ResponseException(String.format("Unable to read data: %s", e.getMessage()));
+        }
+        return null;
+    }
+
+    private String readUser(ResultSet rs) throws SQLException {
+        return rs.getString("username");
     }
 
     private void configureDatabase() throws ResponseException {

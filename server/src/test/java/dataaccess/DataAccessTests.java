@@ -1,23 +1,27 @@
 package dataaccess;
 
 import exception.ResponseException;
+import model.AuthData;
 import model.UserData;
 import org.junit.jupiter.api.*;
 
 public class DataAccessTests {
 
-    private static UserData normalUser = new UserData("username", "password", "email");
+    private static UserData normalUser;
+    private static AuthData normalAuth;
     private static SqlDatabaseManager sqlDbManager;
 
     @BeforeAll
     public static void init() throws ResponseException {
         normalUser = new UserData("username", "password", "email");
+        normalAuth = new AuthData("username", "authToken");
         sqlDbManager = new SqlDatabaseManager();
     }
 
-    @AfterAll
-    public static void close() {
-        sqlDbManager.userAccess().clear();
+    @AfterEach
+    public void clearAll() {
+        sqlDbManager.clearAll();
+
     }
 
     @Test
@@ -70,5 +74,13 @@ public class DataAccessTests {
     @DisplayName("Configure Auth Database")
     public void configureAuthDatabase() {
         Assertions.assertDoesNotThrow(SqlAuthAccess::new);
+    }
+
+    @Test
+    @DisplayName("Get User from Database")
+    public void normalGetUser() throws ResponseException {
+        sqlDbManager.userAccess().addUser(normalUser);
+
+        Assertions.assertEquals(normalUser.username(), sqlDbManager.userAccess().getUserByUsername(normalUser.username()));
     }
 }

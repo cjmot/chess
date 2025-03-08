@@ -25,4 +25,10 @@ public class SqlDatabaseManager {
     public SqlAuthAccess authAccess() {
         return this.authAccess;
     }
+
+    public void clearAll() {
+        userAccess.clear();
+        gameAccess.clear();
+        authAccess.clear();
+    }
 }
