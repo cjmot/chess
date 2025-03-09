@@ -77,10 +77,24 @@ public class DataAccessTests {
     }
 
     @Test
-    @DisplayName("Get User from Database")
+    @DisplayName("Get User from Database by Username")
     public void normalGetUser() throws ResponseException {
         sqlDbManager.userAccess().addUser(normalUser);
 
-        Assertions.assertEquals(normalUser.username(), sqlDbManager.userAccess().getUserByUsername(normalUser.username()));
+        String expected = normalUser.username();
+        String actual = sqlDbManager.userAccess().getUserByUsername(normalUser.username());
+
+        Assertions.assertEquals(expected, actual);
+    }
+
+    @Test
+    @DisplayName("Get User from Database by Credentials")
+    public void getUserByCredentials() throws ResponseException {
+        sqlDbManager.userAccess().addUser(normalUser);
+
+        String expected = normalUser.username();
+        String actual = sqlDbManager.userAccess().getUser(normalUser.username(), normalUser.password());
+
+        Assertions.assertEquals(expected, actual);
     }
 }

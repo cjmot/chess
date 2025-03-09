@@ -6,7 +6,6 @@ import model.UserData;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.sql.*;
-import java.util.Collection;
 import java.util.Objects;
 
 import static java.sql.Types.NULL;
@@ -28,8 +27,8 @@ public class SqlUserAccess {
 
     public String addUser(UserData user) {
         try {
-            var statement = "INSERT INTO user (username, password, email) VALUES (?, ?, ?)";
-            var hashedPassword = BCrypt.hashpw(user.password(), BCrypt.gensalt());
+            String statement = "INSERT INTO user (username, password, email) VALUES (?, ?, ?)";
+            String hashedPassword = BCrypt.hashpw(user.password(), BCrypt.gensalt());
             executeUpdate(statement, user.username(), hashedPassword, user.email());
             return null;
         } catch (ResponseException e) {
@@ -44,11 +43,11 @@ public class SqlUserAccess {
     }
 
     public String getUserByUsername(String username) throws ResponseException {
-        try (var conn = DatabaseManager.getConnection()) {
+        try (Connection conn = DatabaseManager.getConnection()) {
             String statement = "SELECT username FROM user WHERE username=?;";
             try (PreparedStatement ps = conn.prepareStatement(statement)) {
                 ps.setString(1, username);
-                try (var rs = ps.executeQuery()) {
+                try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
                         if (Objects.equals(readUser(rs), username)) {
                             return username;
@@ -64,13 +63,33 @@ public class SqlUserAccess {
         return null;
     }
 
+    public String getUser(String username, String password) throws ResponseException {
+        try (Connection conn = DatabaseManager.getConnection()) {
+            String statement = "SELECT username, password FROM user WHERE username=?;";
+            try (PreparedStatement ps = conn.prepareStatement(statement)) {
+                ps.setString(1, username);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next() && Objects.equals(readUser(rs), username)) {
+                        String hashedPassword = rs.getString("password");
+                        if (BCrypt.checkpw(password, hashedPassword)) {
+                            return username;
+                        }
+                     }
+                }
+            }
+        } catch (Exception e) {
+            throw new ResponseException(String.format("Unable to read data: %s", e.getMessage()));
+        }
+        return null;
+    }
+
     private String readUser(ResultSet rs) throws SQLException {
         return rs.getString("username");
     }
 
     private void configureDatabase() throws ResponseException {
         DatabaseManager.createDatabase();
-        try (var conn = DatabaseManager.getConnection()) {
+        try (Connection conn = DatabaseManager.getConnection()) {
             String createStatement = """
                     CREATE TABLE IF NOT EXISTS user (
                       id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -79,8 +98,8 @@ public class SqlUserAccess {
                       email varchar(256) UNIQUE NOT NULL
                     );
                     """;
-            try (var preparedStatement = conn.prepareStatement(createStatement)) {
-                preparedStatement.executeUpdate();
+            try (PreparedStatement ps = conn.prepareStatement(createStatement)) {
+                ps.executeUpdate();
             }
         } catch (SQLException ex) {
             throw new ResponseException(String.format("Unable to configure database: %s", ex.getMessage()));
@@ -89,7 +108,7 @@ public class SqlUserAccess {
 
     private void executeUpdate(String statement, Object... params) throws ResponseException {
         try (Connection conn = DatabaseManager.getConnection()) {
-            try (var ps = conn.prepareStatement(statement, Statement.RETURN_GENERATED_KEYS)) {
+            try (PreparedStatement ps = conn.prepareStatement(statement, Statement.RETURN_GENERATED_KEYS)) {
                 for (int i = 0; i < params.length; i++) {
                     var param = params[i];
                     switch (param) {
@@ -102,11 +121,10 @@ public class SqlUserAccess {
                 }
                 ps.executeUpdate();
 
-                var rs = ps.getGeneratedKeys();
+                ResultSet rs = ps.getGeneratedKeys();
                 if (rs.next()) {
                     rs.getInt(1);
                 }
-
             }
         } catch (SQLException e) {
             throw new ResponseException(String.format("unable to update database: %s, %s", statement, e.getMessage()));
