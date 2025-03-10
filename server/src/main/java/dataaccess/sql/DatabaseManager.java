@@ -1,4 +1,4 @@
-package dataaccess;
+package dataaccess.sql;
 
 import exception.PropertyException;
 import exception.ResponseException;
@@ -19,7 +19,6 @@ public class DatabaseManager {
         try {
             try (var propStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("db.properties")) {
                 if (propStream == null) {
-                    // TODO: Change exception type
                     throw new PropertyException("Unable to load db.properties");
                 }
                 Properties props = new Properties();

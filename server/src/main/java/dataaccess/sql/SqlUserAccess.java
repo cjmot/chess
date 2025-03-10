@@ -1,24 +1,29 @@
-package dataaccess;
+package dataaccess.sql;
 
 import exception.ResponseException;
-import model.GameData;
 import model.UserData;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.sql.*;
 import java.util.Objects;
 
-import static java.sql.Types.NULL;
-
 public class SqlUserAccess {
 
     public SqlUserAccess() throws ResponseException {
-        configureDatabase();
+        String createStatement = """
+                    CREATE TABLE IF NOT EXISTS user (
+                      id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                      username varchar(256) UNIQUE NOT NULL,
+                      password varchar(256) UNIQUE NOT NULL,
+                      email varchar(256) UNIQUE NOT NULL
+                    );
+                    """;
+        SqlDatabaseManager.configureDatabase(createStatement);
     }
 
     public String clear() {
         try {
-            executeUpdate("TRUNCATE TABLE user;");
+            SqlDatabaseManager.executeUpdate("TRUNCATE TABLE user;");
             return null;
         } catch (ResponseException e) {
             return e.getMessage();
@@ -29,7 +34,7 @@ public class SqlUserAccess {
         try {
             String statement = "INSERT INTO user (username, password, email) VALUES (?, ?, ?)";
             String hashedPassword = BCrypt.hashpw(user.password(), BCrypt.gensalt());
-            executeUpdate(statement, user.username(), hashedPassword, user.email());
+            SqlDatabaseManager.executeUpdate(statement, user.username(), hashedPassword, user.email());
             return null;
         } catch (ResponseException e) {
             if (e.getMessage().contains("Duplicate entry 'username'")) {
@@ -85,49 +90,5 @@ public class SqlUserAccess {
 
     private String readUser(ResultSet rs) throws SQLException {
         return rs.getString("username");
-    }
-
-    private void configureDatabase() throws ResponseException {
-        DatabaseManager.createDatabase();
-        try (Connection conn = DatabaseManager.getConnection()) {
-            String createStatement = """
-                    CREATE TABLE IF NOT EXISTS user (
-                      id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                      username varchar(256) UNIQUE NOT NULL,
-                      password varchar(256) UNIQUE NOT NULL,
-                      email varchar(256) UNIQUE NOT NULL
-                    );
-                    """;
-            try (PreparedStatement ps = conn.prepareStatement(createStatement)) {
-                ps.executeUpdate();
-            }
-        } catch (SQLException ex) {
-            throw new ResponseException(String.format("Unable to configure database: %s", ex.getMessage()));
-        }
-    }
-
-    private void executeUpdate(String statement, Object... params) throws ResponseException {
-        try (Connection conn = DatabaseManager.getConnection()) {
-            try (PreparedStatement ps = conn.prepareStatement(statement, Statement.RETURN_GENERATED_KEYS)) {
-                for (int i = 0; i < params.length; i++) {
-                    var param = params[i];
-                    switch (param) {
-                        case String p -> ps.setString(i + 1, p);
-                        case Integer p -> ps.setInt(i + 1, p);
-                        case GameData p -> ps.setString(i + 1, p.toString());
-                        case null -> ps.setNull(i + 1, NULL);
-                        default -> throw new IllegalStateException("Unexpected value: " + param);
-                    }
-                }
-                ps.executeUpdate();
-
-                ResultSet rs = ps.getGeneratedKeys();
-                if (rs.next()) {
-                    rs.getInt(1);
-                }
-            }
-        } catch (SQLException e) {
-            throw new ResponseException(String.format("unable to update database: %s, %s", statement, e.getMessage()));
-        }
     }
 }

@@ -1,4 +1,4 @@
-package dataaccess;
+package dataaccess.sql;
 
 import exception.ResponseException;
 import model.GameData;
@@ -9,31 +9,39 @@ import java.sql.Statement;
 
 import static java.sql.Types.NULL;
 
-public class SqlAuthAccess {
+public class SqlDatabaseManager {
 
-    public SqlAuthAccess() throws ResponseException {
-        configureDatabase();
+    private final SqlUserAccess userAccess;
+    private final SqlGameAccess gameAccess;
+    private final SqlAuthAccess authAccess;
+
+    public SqlDatabaseManager() throws ResponseException {
+            userAccess = new SqlUserAccess();
+            gameAccess = new SqlGameAccess();
+            authAccess = new SqlAuthAccess();
     }
 
-    public String clear() {
-        try {
-            executeUpdate("TRUNCATE TABLE auth");
-            return null;
-        } catch (ResponseException e) {
-            return e.getMessage();
-        }
+    public SqlUserAccess userAccess() {
+        return this.userAccess;
     }
 
-    private void configureDatabase() throws ResponseException {
+    public SqlGameAccess gameAccess() {
+        return this.gameAccess;
+    }
+
+    public SqlAuthAccess authAccess() {
+        return this.authAccess;
+    }
+
+    public void clearAll() {
+        userAccess.clear();
+        gameAccess.clear();
+        authAccess.clear();
+    }
+
+    static void configureDatabase(String createStatement) throws ResponseException {
         DatabaseManager.createDatabase();
         try (var conn = DatabaseManager.getConnection()) {
-            String createStatement = """
-                    CREATE TABLE IF NOT EXISTS auth (
-                      id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                      username varchar(256) UNIQUE NOT NULL,
-                      auth_token varchar(256) UNIQUE NOT NULL
-                    );
-                    """;
             try (var preparedStatement = conn.prepareStatement(createStatement)) {
                 preparedStatement.executeUpdate();
             }
@@ -42,7 +50,7 @@ public class SqlAuthAccess {
         }
     }
 
-    private void executeUpdate(String statement, Object... params) throws ResponseException {
+    static void executeUpdate(String statement, Object... params) throws ResponseException {
         try (Connection conn = DatabaseManager.getConnection()) {
             try (var ps = conn.prepareStatement(statement, Statement.RETURN_GENERATED_KEYS)) {
                 for (int i = 0; i < params.length; i++) {
