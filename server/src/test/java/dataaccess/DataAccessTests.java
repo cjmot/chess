@@ -25,7 +25,6 @@ public class DataAccessTests {
     @AfterEach
     public void clearAll() {
         sqlDbManager.clearAll();
-
     }
 
     @Test
@@ -100,5 +99,11 @@ public class DataAccessTests {
         String actual = sqlDbManager.userAccess().getUser(normalUser.username(), normalUser.password());
 
         Assertions.assertEquals(expected, actual);
+    }
+
+    @Test
+    @DisplayName("Add auth to Database")
+    public void addAuthToDatabase() {
+        Assertions.assertNull(sqlDbManager.authAccess().addAuth(normalAuth));
     }
 }
