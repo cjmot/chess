@@ -1,11 +1,13 @@
 package dataaccess;
 
+import chess.ChessGame;
 import dataaccess.sql.SqlAuthAccess;
 import dataaccess.sql.SqlDatabaseManager;
 import dataaccess.sql.SqlGameAccess;
 import dataaccess.sql.SqlUserAccess;
 import exception.ResponseException;
 import model.AuthData;
+import model.GameData;
 import model.UserData;
 import org.junit.jupiter.api.*;
 
@@ -13,12 +15,14 @@ public class DataAccessTests {
 
     private static UserData normalUser;
     private static AuthData normalAuth;
+    private static GameData normalGame;
     private static SqlDatabaseManager sqlDbManager;
 
     @BeforeAll
     public static void init() throws ResponseException {
         normalUser = new UserData("username", "password", "email");
         normalAuth = new AuthData("username", "authToken");
+        normalGame = new GameData(1, null, null, "game1", new ChessGame());
         sqlDbManager = new SqlDatabaseManager();
     }
 
@@ -105,5 +109,11 @@ public class DataAccessTests {
     @DisplayName("Add auth to Database")
     public void addAuthToDatabase() {
         Assertions.assertNull(sqlDbManager.authAccess().addAuth(normalAuth));
+    }
+
+    @Test
+    @DisplayName("Add Game to Database")
+    public void addGameToDatabase() {
+        Assertions.assertNull(sqlDbManager.gameAccess().addGame(normalGame));
     }
 }

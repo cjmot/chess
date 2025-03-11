@@ -40,4 +40,8 @@ public class GameData {
     public void setBlackUsername(String username) {
         this.blackUsername = username;
     }
+
+    public ChessGame game() {
+        return this.game;
+    }
 }
