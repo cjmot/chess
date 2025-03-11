@@ -11,6 +11,8 @@ import model.GameData;
 import model.UserData;
 import org.junit.jupiter.api.*;
 
+import java.util.Objects;
+
 public class DataAccessTests {
 
     private static UserData normalUser;
@@ -140,5 +142,19 @@ public class DataAccessTests {
         sqlDbManager.gameAccess().addGame(game3);
 
         Assertions.assertEquals(3, sqlDbManager.gameAccess().getAllGames().size());
+    }
+
+    @Test
+    @DisplayName("Update Game")
+    public void updateGame() throws ResponseException {
+        sqlDbManager.gameAccess().addGame(normalGame);
+
+        Assertions.assertNull(
+                sqlDbManager.gameAccess().updateGame("WHITE", 1, normalUser.username())
+        );
+        Assertions.assertTrue(
+                sqlDbManager.gameAccess().getAllGames().stream()
+                        .anyMatch(game -> Objects.equals(game.whiteUsername(), normalUser.username()))
+        );
     }
 }

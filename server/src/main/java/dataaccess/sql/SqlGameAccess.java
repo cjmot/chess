@@ -11,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 
 public class SqlGameAccess {
 
@@ -58,7 +59,7 @@ public class SqlGameAccess {
 
     public Collection<GameData> getAllGames() throws ResponseException {
         try (Connection conn = DatabaseManager.getConnection()) {
-            String statement = "Select game_id, white_username, black_username, game_name, game FROM game";
+            String statement = "SELECT game_id, white_username, black_username, game_name, game FROM game";
             try (PreparedStatement ps = conn.prepareStatement(statement)) {
                 try (ResultSet rs = ps.executeQuery()) {
                     Collection<GameData> games = new ArrayList<>();
@@ -74,25 +75,37 @@ public class SqlGameAccess {
     }
 
     public String updateGame(String playerColor, Integer gameID, String username) {
-        throw new RuntimeException("Not implemented");
+        try (Connection conn = DatabaseManager.getConnection()) {
+            String statement = "SELECT white_username, black_username FROM game WHERE game_id=?";
+            try (PreparedStatement ps = conn.prepareStatement(statement)) {
+                ps.setInt(1, gameID);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        String whiteUsername = rs.getString("white_username");
+                        String blackUsername = rs.getString("black_username");
+                        if (Objects.equals(playerColor, "WHITE") && whiteUsername == null) {
+                            return setDbUsername(username, "WHITE", gameID);
+                        } else if (Objects.equals(playerColor, "BLACK") && blackUsername == null) {
+                            return setDbUsername(username, "BLACK", gameID);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            return String.format("Failed to update game: %s", e.getMessage());
+        }
+        return "Failed to update game";
     }
 
-    private String setWhite(GameData game, String username) {
-        if (game.whiteUsername() != null) {
-            return "Error: already taken";
+    private String setDbUsername(String username, String color, Integer gameID) throws ResponseException {
+        String statement;
+        if (Objects.equals(color, "WHITE")) {
+            statement = "UPDATE game SET white_username=? WHERE game_id=?";
         } else {
-            game.setWhiteUsername(username);
-            return null;
+            statement = "UPDATE game SET black_username=? WHERE game_id=?";
         }
-    }
-
-    private String setBlack(GameData game, String username) {
-        if (game.blackUsername() != null) {
-            return "Error: already taken";
-        } else {
-            game.setBlackUsername(username);
-            return null;
-        }
+        SqlDatabaseManager.executeUpdate(statement, username, gameID);
+        return null;
     }
 
     private GameData getGameFromRs(ResultSet rs) throws SQLException {
