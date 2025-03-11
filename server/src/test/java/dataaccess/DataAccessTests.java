@@ -106,9 +106,17 @@ public class DataAccessTests {
     }
 
     @Test
-    @DisplayName("Add auth to Database")
+    @DisplayName("Add Auth to Database")
     public void addAuthToDatabase() {
         Assertions.assertNull(sqlDbManager.authAccess().addAuth(normalAuth));
+    }
+
+    @Test
+    @DisplayName("Get Auth From Database")
+    public void getAuthFromDatabase() throws ResponseException {
+        sqlDbManager.authAccess().addAuth(normalAuth);
+
+        Assertions.assertNotNull(sqlDbManager.authAccess().getAuth(normalAuth.authToken()));
     }
 
     @Test
