@@ -1,12 +1,20 @@
 package dataaccess.sql;
 
+import chess.ChessGame;
 import com.google.gson.Gson;
 import exception.ResponseException;
 import model.GameData;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 
 public class SqlGameAccess {
+
+    private final Gson gson;
 
     public SqlGameAccess() throws ResponseException {
         String createStatement = """
@@ -19,6 +27,7 @@ public class SqlGameAccess {
                 );
                 """;
         SqlDatabaseManager.configureDatabase(createStatement);
+        gson = new Gson();
     }
 
     public String clear() {
@@ -32,7 +41,6 @@ public class SqlGameAccess {
 
     public String addGame(GameData game) {
         try {
-            Gson gson = new Gson();
             String chessGameJson = gson.toJson(game.game());
             String statement = "INSERT INTO game (white_username, black_username, game_name, game) VALUES (?, ?, ?, ?)";
             SqlDatabaseManager.executeUpdate(
@@ -48,8 +56,21 @@ public class SqlGameAccess {
         }
     }
 
-    public Collection<GameData> getAllGames() {
-        throw new RuntimeException("Not implemented");
+    public Collection<GameData> getAllGames() throws ResponseException {
+        try (Connection conn = DatabaseManager.getConnection()) {
+            String statement = "Select game_id, white_username, black_username, game_name, game FROM game";
+            try (PreparedStatement ps = conn.prepareStatement(statement)) {
+                try (ResultSet rs = ps.executeQuery()) {
+                    Collection<GameData> games = new ArrayList<>();
+                    while (rs.next()) {
+                        games.add(getGameFromRs(rs));
+                    }
+                    return games;
+                }
+            }
+        } catch (Exception e) {
+            throw new ResponseException(String.format("Failed to get games: %s", e.getMessage()));
+        }
     }
 
     public String updateGame(String playerColor, Integer gameID, String username) {
@@ -72,5 +93,14 @@ public class SqlGameAccess {
             game.setBlackUsername(username);
             return null;
         }
+    }
+
+    private GameData getGameFromRs(ResultSet rs) throws SQLException {
+        int gameID = rs.getInt("game_id");
+        String whiteUsername = rs.getString("white_username");
+        String blackUsername = rs.getString("black_username");
+        String gameName = rs.getString("game_name");
+        ChessGame game = gson.fromJson(rs.getString("game"), ChessGame.class);
+        return new GameData(gameID, whiteUsername, blackUsername, gameName, game);
     }
 }

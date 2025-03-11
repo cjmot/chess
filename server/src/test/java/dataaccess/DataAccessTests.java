@@ -124,4 +124,21 @@ public class DataAccessTests {
     public void addGameToDatabase() {
         Assertions.assertNull(sqlDbManager.gameAccess().addGame(normalGame));
     }
+
+    @Test
+    @DisplayName("Get Game From Database")
+    public void getAllGames() throws ResponseException {
+        GameData game2 = new GameData(
+                2, null, null, "game2", new ChessGame()
+        );
+        GameData game3 = new GameData(
+                3, null, null, "game3", new ChessGame()
+        );
+
+        sqlDbManager.gameAccess().addGame(normalGame);
+        sqlDbManager.gameAccess().addGame(game2);
+        sqlDbManager.gameAccess().addGame(game3);
+
+        Assertions.assertEquals(3, sqlDbManager.gameAccess().getAllGames().size());
+    }
 }
