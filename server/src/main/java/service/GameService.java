@@ -12,6 +12,7 @@ import dto.JoinGameRequest;
 import dto.JoinGameResponse;
 import model.*;
 
+import java.util.Objects;
 import java.util.Set;
 
 public class GameService {
@@ -61,7 +62,9 @@ public class GameService {
         if (auth == null) {
             return new JoinGameResponse("Error: unauthorized");
         }
-
+        if (!Objects.equals(req.playerColor(), "WHITE") && !"BLACK".equals(req.playerColor())) {
+            return new JoinGameResponse("Error: bad player color");
+        }
         String updateMessage = gameAccess.updateGame(req.playerColor(), req.gameID(), auth.username());
         if (updateMessage != null) {
             return new JoinGameResponse(updateMessage);
