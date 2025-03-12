@@ -1,6 +1,8 @@
 package dataaccess.sql;
 
+import dto.LoginResponse;
 import exception.ResponseException;
+import model.AuthData;
 import model.UserData;
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -9,8 +11,9 @@ import java.util.Objects;
 
 public class SqlUserAccess {
 
-    public SqlUserAccess() throws ResponseException {
-        String createStatement = """
+    public SqlUserAccess() {
+        try {
+            String createStatement = """
                     CREATE TABLE IF NOT EXISTS user (
                       id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
                       username varchar(256) UNIQUE NOT NULL,
@@ -18,7 +21,10 @@ public class SqlUserAccess {
                       email varchar(256) UNIQUE NOT NULL
                     );
                     """;
-        SqlDatabaseManager.configureDatabase(createStatement);
+            SqlDatabaseManager.configureDatabase(createStatement);
+        } catch (ResponseException e) {
+            System.err.println(e.getMessage());
+        }
     }
 
     public String clear() {
@@ -47,7 +53,7 @@ public class SqlUserAccess {
         }
     }
 
-    public String getUserByUsername(String username) throws ResponseException {
+    public AuthData getUserByUsername(String username) {
         try (Connection conn = DatabaseManager.getConnection()) {
             String statement = "SELECT username FROM user WHERE username=?;";
             try (PreparedStatement ps = conn.prepareStatement(statement)) {
@@ -55,7 +61,7 @@ public class SqlUserAccess {
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
                         if (Objects.equals(readUser(rs), username)) {
-                            return username;
+                            return new AuthData(username, null, null);
                         } else {
                             return null;
                         }
@@ -63,12 +69,12 @@ public class SqlUserAccess {
                 }
             }
         } catch (Exception e) {
-            throw new ResponseException(String.format("Unable to read data: %s", e.getMessage()));
+            return new AuthData(null, null, String.format("Unable to read data: %s", e.getMessage()));
         }
         return null;
     }
 
-    public String getUser(String username, String password) throws ResponseException {
+    public LoginResponse getUser(String username, String password) {
         try (Connection conn = DatabaseManager.getConnection()) {
             String statement = "SELECT username, password FROM user WHERE username=?;";
             try (PreparedStatement ps = conn.prepareStatement(statement)) {
@@ -77,15 +83,17 @@ public class SqlUserAccess {
                     if (rs.next() && Objects.equals(readUser(rs), username)) {
                         String hashedPassword = rs.getString("password");
                         if (BCrypt.checkpw(password, hashedPassword)) {
-                            return username;
+                            return new LoginResponse(username, null, null);
                         }
                      }
                 }
             }
         } catch (Exception e) {
-            throw new ResponseException(String.format("Unable to read data: %s", e.getMessage()));
+            return new LoginResponse(
+                    null, null, String.format("Unable to read data: %s", e.getMessage())
+            );
         }
-        return null;
+        return new LoginResponse(null, null, "Error: unauthorized");
     }
 
     private String readUser(ResultSet rs) throws SQLException {

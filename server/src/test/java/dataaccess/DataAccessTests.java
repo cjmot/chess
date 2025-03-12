@@ -5,7 +5,8 @@ import dataaccess.sql.SqlAuthAccess;
 import dataaccess.sql.SqlDatabaseManager;
 import dataaccess.sql.SqlGameAccess;
 import dataaccess.sql.SqlUserAccess;
-import exception.ResponseException;
+import dto.ListGamesResponse;
+import dto.LoginResponse;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
@@ -21,9 +22,9 @@ public class DataAccessTests {
     private static SqlDatabaseManager sqlDbManager;
 
     @BeforeAll
-    public static void init() throws ResponseException {
+    public static void init() {
         normalUser = new UserData("username", "password", "email");
-        normalAuth = new AuthData("username", "authToken");
+        normalAuth = new AuthData("username", "authToken", null);
         normalGame = new GameData(1, null, null, "game1", new ChessGame());
         sqlDbManager = new SqlDatabaseManager();
     }
@@ -87,24 +88,25 @@ public class DataAccessTests {
 
     @Test
     @DisplayName("Get User from Database by Username")
-    public void normalGetUser() throws ResponseException {
+    public void normalGetUser() {
         sqlDbManager.userAccess().addUser(normalUser);
 
         String expected = normalUser.username();
-        String actual = sqlDbManager.userAccess().getUserByUsername(normalUser.username());
+        String actual = sqlDbManager.userAccess().getUserByUsername(normalUser.username()).username();
 
         Assertions.assertEquals(expected, actual);
     }
 
     @Test
     @DisplayName("Get User from Database by Credentials")
-    public void getUserByCredentials() throws ResponseException {
+    public void getUserByCredentials() {
         sqlDbManager.userAccess().addUser(normalUser);
 
         String expected = normalUser.username();
-        String actual = sqlDbManager.userAccess().getUser(normalUser.username(), normalUser.password());
+        LoginResponse actual = sqlDbManager.userAccess().getUser(normalUser.username(), normalUser.password()
+        );
 
-        Assertions.assertEquals(expected, actual);
+        Assertions.assertEquals(expected, actual.username());
     }
 
     @Test
@@ -115,7 +117,7 @@ public class DataAccessTests {
 
     @Test
     @DisplayName("Get Auth From Database")
-    public void getAuthFromDatabase() throws ResponseException {
+    public void getAuthFromDatabase() {
         sqlDbManager.authAccess().addAuth(normalAuth);
 
         Assertions.assertNotNull(sqlDbManager.authAccess().getAuth(normalAuth.authToken()));
@@ -124,12 +126,12 @@ public class DataAccessTests {
     @Test
     @DisplayName("Add Game to Database")
     public void addGameToDatabase() {
-        Assertions.assertNull(sqlDbManager.gameAccess().addGame(normalGame));
+        Assertions.assertEquals("1", sqlDbManager.gameAccess().addGame(normalGame));
     }
 
     @Test
     @DisplayName("Get Game From Database")
-    public void getAllGames() throws ResponseException {
+    public void getAllGames() {
         GameData game2 = new GameData(
                 2, null, null, "game2", new ChessGame()
         );
@@ -141,19 +143,23 @@ public class DataAccessTests {
         sqlDbManager.gameAccess().addGame(game2);
         sqlDbManager.gameAccess().addGame(game3);
 
-        Assertions.assertEquals(3, sqlDbManager.gameAccess().getAllGames().size());
+        ListGamesResponse response = sqlDbManager.gameAccess().getAllGames();
+
+        Assertions.assertNull(response.message());
+        Assertions.assertEquals(3, sqlDbManager.gameAccess().getAllGames().games().size()
+        );
     }
 
     @Test
     @DisplayName("Update Game")
-    public void updateGame() throws ResponseException {
+    public void updateGame() {
         sqlDbManager.gameAccess().addGame(normalGame);
 
         Assertions.assertNull(
                 sqlDbManager.gameAccess().updateGame("WHITE", 1, normalUser.username())
         );
         Assertions.assertTrue(
-                sqlDbManager.gameAccess().getAllGames().stream()
+                sqlDbManager.gameAccess().getAllGames().games().stream()
                         .anyMatch(game -> Objects.equals(game.whiteUsername(), normalUser.username()))
         );
     }

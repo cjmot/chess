@@ -1,9 +1,5 @@
 package dataaccess.sql;
 
-import chess.ChessPiece;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
 import exception.ResponseException;
 import model.GameData;
 
@@ -15,14 +11,14 @@ import static java.sql.Types.NULL;
 
 public class SqlDatabaseManager {
 
-    private final SqlUserAccess userAccess;
-    private final SqlGameAccess gameAccess;
-    private final SqlAuthAccess authAccess;
+    private SqlUserAccess userAccess = null;
+    private SqlGameAccess gameAccess = null;
+    private SqlAuthAccess authAccess = null;
 
-    public SqlDatabaseManager() throws ResponseException {
-            userAccess = new SqlUserAccess();
-            gameAccess = new SqlGameAccess();
-            authAccess = new SqlAuthAccess();
+    public SqlDatabaseManager() {
+        userAccess = new SqlUserAccess();
+        gameAccess = new SqlGameAccess();
+        authAccess = new SqlAuthAccess();
     }
 
     public SqlUserAccess userAccess() {
@@ -54,7 +50,7 @@ public class SqlDatabaseManager {
         }
     }
 
-    static void executeUpdate(String statement, Object... params) throws ResponseException {
+    static int executeUpdate(String statement, Object... params) throws ResponseException {
         try (Connection conn = DatabaseManager.getConnection()) {
             try (var ps = conn.prepareStatement(statement, Statement.RETURN_GENERATED_KEYS)) {
                 for (int i = 0; i < params.length; i++) {
@@ -71,9 +67,9 @@ public class SqlDatabaseManager {
 
                 var rs = ps.getGeneratedKeys();
                 if (rs.next()) {
-                    rs.getInt(1);
+                    return rs.getInt(1);
                 }
-
+                return 0;
             }
         } catch (SQLException e) {
             throw new ResponseException(String.format("unable to update database: %s, %s", statement, e.getMessage()));

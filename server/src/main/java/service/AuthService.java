@@ -1,9 +1,9 @@
 package service;
 
-import dataaccess.MemoryUserAccess;
-import dataaccess.MemoryGameAccess;
-import dataaccess.MemoryAuthAccess;
-import dataaccess.MemoryDatabaseManager;
+import dataaccess.sql.SqlAuthAccess;
+import dataaccess.sql.SqlDatabaseManager;
+import dataaccess.sql.SqlGameAccess;
+import dataaccess.sql.SqlUserAccess;
 import dto.ClearResponse;
 import dto.RegisterRequest;
 import dto.RegisterResponse;
@@ -13,11 +13,11 @@ import java.util.UUID;
 
 public class AuthService {
 
-    private final MemoryUserAccess userAccess;
-    private final MemoryGameAccess gameAccess;
-    private final MemoryAuthAccess authAccess;
+    private final SqlUserAccess userAccess;
+    private final SqlGameAccess gameAccess;
+    private final SqlAuthAccess authAccess;
 
-    public AuthService(MemoryDatabaseManager dbManager) {
+    public AuthService(SqlDatabaseManager dbManager) {
         userAccess = dbManager.userAccess();
         gameAccess = dbManager.gameAccess();
         authAccess = dbManager.authAccess();
@@ -50,7 +50,7 @@ public class AuthService {
             return new RegisterResponse(null, null, addedMessage);
         }
 
-        AuthData newAuth = new AuthData(req.user().username(), UUID.randomUUID().toString());
+        AuthData newAuth = new AuthData(req.user().username(), UUID.randomUUID().toString(), null);
         addedMessage = authAccess.addAuth(newAuth);
         if (addedMessage != null) {
             return new RegisterResponse(null, null, addedMessage);

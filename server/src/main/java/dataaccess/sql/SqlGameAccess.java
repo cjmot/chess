@@ -2,6 +2,7 @@ package dataaccess.sql;
 
 import chess.ChessGame;
 import com.google.gson.Gson;
+import dto.ListGamesResponse;
 import exception.ResponseException;
 import model.GameData;
 
@@ -17,18 +18,22 @@ public class SqlGameAccess {
 
     private final Gson gson;
 
-    public SqlGameAccess() throws ResponseException {
-        String createStatement = """
-                CREATE TABLE IF NOT EXISTS game (
-                  game_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                  white_username varchar(256),
-                  black_username varchar(256),
-                  game_name varchar(256) UNIQUE,
-                  game JSON NOT NULL
-                );
-                """;
-        SqlDatabaseManager.configureDatabase(createStatement);
+    public SqlGameAccess() {
         gson = new Gson();
+        try {
+            String createStatement = """
+                    CREATE TABLE IF NOT EXISTS game (
+                      game_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                      white_username varchar(256),
+                      black_username varchar(256),
+                      game_name varchar(256) UNIQUE,
+                      game JSON NOT NULL
+                    );
+                    """;
+            SqlDatabaseManager.configureDatabase(createStatement);
+        } catch (ResponseException e) {
+            System.err.println(e.getMessage());
+        }
     }
 
     public String clear() {
@@ -41,23 +46,23 @@ public class SqlGameAccess {
     }
 
     public String addGame(GameData game) {
+        String chessGameJson = gson.toJson(game.game());
+        String statement = "INSERT INTO game (white_username, black_username, game_name, game) VALUES (?, ?, ?, ?)";
         try {
-            String chessGameJson = gson.toJson(game.game());
-            String statement = "INSERT INTO game (white_username, black_username, game_name, game) VALUES (?, ?, ?, ?)";
-            SqlDatabaseManager.executeUpdate(
-                    statement,
-                    game.whiteUsername(),
-                    game.blackUsername(),
-                    game.gameName(),
-                    chessGameJson
+            int gameID = SqlDatabaseManager.executeUpdate(
+                    statement, game.whiteUsername(), game.blackUsername(), game.gameName(), chessGameJson
             );
-            return null;
+            if (gameID == 0) {
+                return "No auto-generated keys made";
+            }
+            return String.valueOf(gameID);
         } catch (ResponseException e) {
             return String.format("Failed to add game: %s", e.getMessage());
         }
+
     }
 
-    public Collection<GameData> getAllGames() throws ResponseException {
+    public ListGamesResponse getAllGames() {
         try (Connection conn = DatabaseManager.getConnection()) {
             String statement = "SELECT game_id, white_username, black_username, game_name, game FROM game";
             try (PreparedStatement ps = conn.prepareStatement(statement)) {
@@ -66,11 +71,11 @@ public class SqlGameAccess {
                     while (rs.next()) {
                         games.add(getGameFromRs(rs));
                     }
-                    return games;
+                    return new ListGamesResponse(games, null);
                 }
             }
         } catch (Exception e) {
-            throw new ResponseException(String.format("Failed to get games: %s", e.getMessage()));
+            return new ListGamesResponse(null, String.format("Failed to get games: %s", e.getMessage()));
         }
     }
 
@@ -87,6 +92,8 @@ public class SqlGameAccess {
                             return setDbUsername(username, "WHITE", gameID);
                         } else if (Objects.equals(playerColor, "BLACK") && blackUsername == null) {
                             return setDbUsername(username, "BLACK", gameID);
+                        } else {
+                            return "Error: Color already taken";
                         }
                     }
                 }

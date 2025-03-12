@@ -1,40 +1,39 @@
 package service;
 
-import dataaccess.MemoryDatabaseManager;
-import dataaccess.MemoryAuthAccess;
-import dataaccess.MemoryUserAccess;
+import dataaccess.sql.SqlAuthAccess;
+import dataaccess.sql.SqlDatabaseManager;
+import dataaccess.sql.SqlUserAccess;
 import dto.LoginRequest;
 import dto.LoginResponse;
 import dto.LogoutRequest;
 import dto.LogoutResponse;
 import model.AuthData;
-import model.UserData;
 
 import java.util.UUID;
 
 public class UserService {
 
-    private final MemoryUserAccess userAccess;
-    private final MemoryAuthAccess authAccess;
+    private final SqlUserAccess userAccess;
+    private final SqlAuthAccess authAccess;
 
-    public UserService(MemoryDatabaseManager dbManager) {
+    public UserService(SqlDatabaseManager dbManager) {
         userAccess = dbManager.userAccess();
         authAccess = dbManager.authAccess();
     }
 
     public LoginResponse login(LoginRequest req) {
-        UserData user = userAccess.getUser(req.user().username(), req.user().password());
-        if (user == null) {
-            return new LoginResponse(null, null, "Error: unauthorized");
+        LoginResponse userResponse = userAccess.getUser(req.user().username(), req.user().password());
+        if (userResponse.message() != null) {
+            return new LoginResponse(null, null, userResponse.message());
         }
 
         String token = UUID.randomUUID().toString();
-        String addedMessage = authAccess.addAuth(new AuthData(user.username(), token));
+        String addedMessage = authAccess.addAuth(new AuthData(userResponse.username(), token, null));
         if (addedMessage != null) {
             return new LoginResponse(null, null, addedMessage);
         }
 
-        return new LoginResponse(user.username(), token, null);
+        return new LoginResponse(userResponse.username(), token, null);
     }
 
     public LogoutResponse logout(LogoutRequest req) {

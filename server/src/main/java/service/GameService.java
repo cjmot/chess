@@ -4,6 +4,9 @@ import chess.ChessGame;
 import dataaccess.MemoryDatabaseManager;
 import dataaccess.MemoryAuthAccess;
 import dataaccess.MemoryGameAccess;
+import dataaccess.sql.SqlAuthAccess;
+import dataaccess.sql.SqlDatabaseManager;
+import dataaccess.sql.SqlGameAccess;
 import dto.ListGamesRequest;
 import dto.ListGamesResponse;
 import dto.CreateGameRequest;
@@ -13,14 +16,13 @@ import dto.JoinGameResponse;
 import model.*;
 
 import java.util.Objects;
-import java.util.Set;
 
 public class GameService {
 
-    private final MemoryGameAccess gameAccess;
-    private final MemoryAuthAccess authAccess;
+    private final SqlGameAccess gameAccess;
+    private final SqlAuthAccess authAccess;
 
-    public GameService(MemoryDatabaseManager dbManager) {
+    public GameService(SqlDatabaseManager dbManager) {
         gameAccess = dbManager.gameAccess();
         authAccess = dbManager.authAccess();
     }
@@ -29,12 +31,7 @@ public class GameService {
         if (authAccess.getAuth(req.authToken()) == null) {
             return new ListGamesResponse(null, "Error: unauthorized");
         }
-
-        Set<GameData> games = gameAccess.getAllGames();
-        if (games == null) {
-            return new ListGamesResponse(null, "Failed to get games");
-        }
-        return new ListGamesResponse(games, null);
+        return gameAccess.getAllGames();
     }
 
     public CreateGameResponse createGame(CreateGameRequest req) {
@@ -43,18 +40,18 @@ public class GameService {
         }
 
         GameData newGame = new GameData(
-                gameAccess.getAllGames().size() + 1,
+                null,
                 null,
                 null,
                 req.gameName(),
                 new ChessGame()
         );
         String addedMessage = gameAccess.addGame(newGame);
-        if (addedMessage != null) {
+        if (addedMessage.contains("Failed to add game")) {
             return new CreateGameResponse(null, addedMessage);
         }
 
-        return new CreateGameResponse(newGame.gameID(), null);
+        return new CreateGameResponse(Integer.parseInt(addedMessage), null);
     }
 
     public JoinGameResponse joinGame(JoinGameRequest req) {

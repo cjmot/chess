@@ -10,15 +10,19 @@ import java.util.Objects;
 
 public class SqlAuthAccess {
 
-    public SqlAuthAccess() throws ResponseException {
-        String createStatement = """
+    public SqlAuthAccess() {
+        try {
+            String createStatement = """
                     CREATE TABLE IF NOT EXISTS auth (
                       id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
                       username varchar(256) NOT NULL,
                       auth_token varchar(256) UNIQUE NOT NULL
                     );
                     """;
-        SqlDatabaseManager.configureDatabase(createStatement);
+            SqlDatabaseManager.configureDatabase(createStatement);
+        } catch (ResponseException e) {
+            System.err.println(e.getMessage());
+        }
     }
 
     public String clear() {
@@ -40,7 +44,7 @@ public class SqlAuthAccess {
         }
     }
 
-    public AuthData getAuth(String token) throws ResponseException {
+    public AuthData getAuth(String token) {
         try (Connection conn = DatabaseManager.getConnection()) {
             String statement = "SELECT username, auth_token FROM auth WHERE auth_token=?";
             try (PreparedStatement ps = conn.prepareStatement(statement)) {
@@ -50,15 +54,24 @@ public class SqlAuthAccess {
                         String username = rs.getString("username");
                         String storedToken = rs.getString("auth_token");
                         if (Objects.equals(storedToken, token)) {
-                            return new AuthData(username, token);
-
+                            return new AuthData(username, token, null);
                         }
                     }
                 }
             }
         } catch (Exception e) {
-            throw new ResponseException(String.format("Unable to read data: %s", e.getMessage()));
+            return new AuthData(null, null, String.format("Failed to get auth: %s", e.getMessage()));
         }
         return null;
+    }
+
+    public String deleteAuth(String token) {
+        try {
+            String statement = "DELETE FROM auth WHERE auth_token=?";
+            SqlDatabaseManager.executeUpdate(statement, token);
+            return null;
+        } catch (ResponseException e) {
+            return String.format("Failed to remove auth: %s", e.getMessage());
+        }
     }
 }
