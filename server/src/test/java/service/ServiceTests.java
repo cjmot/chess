@@ -8,7 +8,6 @@ import org.junit.jupiter.api.*;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 public class ServiceTests {
 
@@ -106,7 +105,7 @@ public class ServiceTests {
         LogoutResponse result = userService.logout(new LogoutRequest("token"));
 
         Assertions.assertEquals(expected, result);
-        Assertions.assertTrue(dbManager.authAccess().getAuth("token").message().equals("Error: Wrong Auth Token"));
+        Assertions.assertEquals("Error: Wrong Auth Token", dbManager.authAccess().getAuth("token").message());
     }
 
     @Test

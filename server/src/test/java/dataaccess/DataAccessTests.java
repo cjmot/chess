@@ -225,6 +225,11 @@ public class DataAccessTests {
     @DisplayName("Update Game Bad PlayerColor")
     public void badPlayerColorUpdateGameTest() {
         sqlDbManager.gameAccess().addGame(normalGame);
-        //TODO: This
+        sqlDbManager.gameAccess().updateGame("WHITE", 1, "username");
+
+        Assertions.assertEquals(
+                "Error: Color already taken",
+                sqlDbManager.gameAccess().updateGame("WHITE", 1, "username")
+        );
     }
 }
