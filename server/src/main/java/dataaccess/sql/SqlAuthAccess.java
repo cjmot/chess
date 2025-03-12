@@ -6,6 +6,7 @@ import model.AuthData;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Objects;
 
 public class SqlAuthAccess {
@@ -50,19 +51,12 @@ public class SqlAuthAccess {
             try (PreparedStatement ps = conn.prepareStatement(statement)) {
                 ps.setString(1, token);
                 try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        String username = rs.getString("username");
-                        String storedToken = rs.getString("auth_token");
-                        if (Objects.equals(storedToken, token)) {
-                            return new AuthData(username, token, null);
-                        }
-                    }
+                    return getAndCheckAuthFromRs(rs, token);
                 }
             }
         } catch (Exception e) {
             return new AuthData(null, null, String.format("Failed to get auth: %s", e.getMessage()));
         }
-        return new AuthData(null, null, "Error: Wrong Auth Token");
     }
 
     public String deleteAuth(String token) {
@@ -73,5 +67,16 @@ public class SqlAuthAccess {
         } catch (ResponseException e) {
             return String.format("Failed to remove auth: %s", e.getMessage());
         }
+    }
+
+    private AuthData getAndCheckAuthFromRs(ResultSet rs, String token) throws SQLException {
+        if (rs.next()) {
+            String username = rs.getString("username");
+            String storedToken = rs.getString("auth_token");
+            if (Objects.equals(storedToken, token)) {
+                return new AuthData(username, token, null);
+            }
+        }
+        return new AuthData(null, null, "Error: Wrong Auth Token");
     }
 }
