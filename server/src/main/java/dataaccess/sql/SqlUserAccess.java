@@ -60,11 +60,7 @@ public class SqlUserAccess {
                 ps.setString(1, username);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        if (Objects.equals(readUser(rs), username)) {
-                            return new AuthData(username, null, null);
-                        } else {
-                            return null;
-                        }
+                        return new AuthData(username, null, null);
                     }
                 }
             }
@@ -80,11 +76,8 @@ public class SqlUserAccess {
             try (PreparedStatement ps = conn.prepareStatement(statement)) {
                 ps.setString(1, username);
                 try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next() && Objects.equals(readUser(rs), username)) {
-                        String hashedPassword = rs.getString("password");
-                        if (BCrypt.checkpw(password, hashedPassword)) {
-                            return new LoginResponse(username, null, null);
-                        }
+                    if (rs.next() && readUser(rs, username).message() == null) {
+                        return checkPassword(rs, username, password);
                      }
                 }
             }
@@ -96,7 +89,19 @@ public class SqlUserAccess {
         return new LoginResponse(null, null, "Error: unauthorized");
     }
 
-    private String readUser(ResultSet rs) throws SQLException {
-        return rs.getString("username");
+    private AuthData readUser(ResultSet rs, String username) throws SQLException {
+        if (Objects.equals(rs.getString("username"), username)) {
+            return new AuthData(username, null, null);
+        } else {
+            return new AuthData(null, null, "Error: unauthorized");
+        }
+    }
+    private LoginResponse checkPassword(ResultSet rs, String username, String password) throws SQLException {
+        String hashedPassword = rs.getString("password");
+        if (BCrypt.checkpw(password, hashedPassword)) {
+            return new LoginResponse(username, null, null);
+        } else {
+            return new LoginResponse(null, null, "Error: unauthorized");
+        }
     }
 }

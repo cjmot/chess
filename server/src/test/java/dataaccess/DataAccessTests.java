@@ -101,8 +101,9 @@ public class DataAccessTests {
     @DisplayName("Get User from Database With Bad Username")
     public void wrongUsernameGetUserTest() {
         sqlDbManager.userAccess().addUser(normalUser);
+        AuthData result = sqlDbManager.userAccess().getUserByUsername("wrong username");
 
-        Assertions.assertNull(sqlDbManager.userAccess().getUserByUsername("wrong username"));
+        Assertions.assertNull(result);
     }
 
     @Test
