@@ -62,7 +62,7 @@ public class SqlAuthAccess {
         } catch (Exception e) {
             return new AuthData(null, null, String.format("Failed to get auth: %s", e.getMessage()));
         }
-        return null;
+        return new AuthData(null, null, "Error: Wrong Auth Token");
     }
 
     public String deleteAuth(String token) {

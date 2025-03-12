@@ -106,7 +106,7 @@ public class ServiceTests {
         LogoutResponse result = userService.logout(new LogoutRequest("token"));
 
         Assertions.assertEquals(expected, result);
-        Assertions.assertNull(dbManager.authAccess().getAuth("token"));
+        Assertions.assertTrue(dbManager.authAccess().getAuth("token").message().equals("Error: Wrong Auth Token"));
     }
 
     @Test

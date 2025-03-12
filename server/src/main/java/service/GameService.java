@@ -1,9 +1,6 @@
 package service;
 
 import chess.ChessGame;
-import dataaccess.MemoryDatabaseManager;
-import dataaccess.MemoryAuthAccess;
-import dataaccess.MemoryGameAccess;
 import dataaccess.sql.SqlAuthAccess;
 import dataaccess.sql.SqlDatabaseManager;
 import dataaccess.sql.SqlGameAccess;
@@ -28,14 +25,14 @@ public class GameService {
     }
 
     public ListGamesResponse listGames(ListGamesRequest req) {
-        if (authAccess.getAuth(req.authToken()) == null) {
+        if (authAccess.getAuth(req.authToken()).message() != null) {
             return new ListGamesResponse(null, "Error: unauthorized");
         }
         return gameAccess.getAllGames();
     }
 
     public CreateGameResponse createGame(CreateGameRequest req) {
-        if (authAccess.getAuth(req.authToken()) == null) {
+        if (authAccess.getAuth(req.authToken()).message() != null) {
             return new CreateGameResponse(null, "Error: unauthorized");
         }
 
@@ -56,7 +53,7 @@ public class GameService {
 
     public JoinGameResponse joinGame(JoinGameRequest req) {
         AuthData auth = authAccess.getAuth(req.authToken());
-        if (auth == null) {
+        if (auth.message() != null) {
             return new JoinGameResponse("Error: unauthorized");
         }
         if (!Objects.equals(req.playerColor(), "WHITE") && !"BLACK".equals(req.playerColor())) {

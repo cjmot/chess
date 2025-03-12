@@ -37,7 +37,8 @@ public class UserService {
     }
 
     public LogoutResponse logout(LogoutRequest req) {
-        if (authAccess.getAuth(req.authToken()) == null) {
+        AuthData authResult = authAccess.getAuth(req.authToken());
+        if (authResult.message() != null) {
             return new LogoutResponse("Error: unauthorized");
         }
         String deletedMessage = authAccess.deleteAuth(req.authToken());

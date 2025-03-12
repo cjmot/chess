@@ -36,19 +36,19 @@ public class DataAccessTests {
 
     @Test
     @DisplayName("Configure User Database")
-    public void configureUserDatabase() {
+    public void configureUserDatabaseTest() {
         Assertions.assertDoesNotThrow(SqlUserAccess::new);
     }
 
     @Test
     @DisplayName("Add a Normal User to User Database")
-    public void addNormalUserToDatabase() {
+    public void addNormalUserToDatabaseTest() {
         Assertions.assertNull(sqlDbManager.userAccess().addUser(normalUser));
     }
 
     @Test
     @DisplayName("Add a Duplicate Username to User Database")
-    public void addDuplicateUsername() {
+    public void addDuplicateUsernameTest() {
         sqlDbManager.userAccess().clear();
         sqlDbManager.userAccess().addUser(normalUser);
 
@@ -58,7 +58,7 @@ public class DataAccessTests {
 
     @Test
     @DisplayName("Add a Duplicate Email to User Database")
-    public void addDuplicateEmail() {
+    public void addDuplicateEmailTest() {
         sqlDbManager.userAccess().clear();
         sqlDbManager.userAccess().addUser(normalUser);
         UserData duplicateEmail = new UserData("normalUser", "password", "email");
@@ -69,26 +69,26 @@ public class DataAccessTests {
 
     @Test
     @DisplayName("Clear User Database")
-    public void clearUserTable() {
+    public void clearUserTableTest() {
         sqlDbManager.userAccess().addUser(normalUser);
         Assertions.assertNull(sqlDbManager.userAccess().clear());
     }
 
     @Test
     @DisplayName("Configure Game Database")
-    public void configureGameDatabase() {
+    public void configureGameDatabaseTest() {
         Assertions.assertDoesNotThrow(SqlGameAccess::new);
     }
 
     @Test
     @DisplayName("Configure Auth Database")
-    public void configureAuthDatabase() {
+    public void configureAuthDatabaseTest() {
         Assertions.assertDoesNotThrow(SqlAuthAccess::new);
     }
 
     @Test
     @DisplayName("Get User from Database by Username")
-    public void normalGetUser() {
+    public void normalGetUserTest() {
         sqlDbManager.userAccess().addUser(normalUser);
 
         String expected = normalUser.username();
@@ -98,8 +98,16 @@ public class DataAccessTests {
     }
 
     @Test
+    @DisplayName("Get User from Database With Bad Username")
+    public void wrongUsernameGetUserTest() {
+        sqlDbManager.userAccess().addUser(normalUser);
+
+        Assertions.assertNull(sqlDbManager.userAccess().getUserByUsername("wrong username"));
+    }
+
+    @Test
     @DisplayName("Get User from Database by Credentials")
-    public void getUserByCredentials() {
+    public void getUserByCredentialsTest() {
         sqlDbManager.userAccess().addUser(normalUser);
 
         String expected = normalUser.username();
@@ -110,28 +118,69 @@ public class DataAccessTests {
     }
 
     @Test
+    @DisplayName("Get User with Wrong Password")
+    public void getUserWithWrongPasswordTest() {
+        sqlDbManager.userAccess().addUser(normalUser);
+        LoginResponse result = sqlDbManager.userAccess().getUser("username", "wrongPassword");
+
+        Assertions.assertNull(result.username());
+        Assertions.assertNull(result.authToken());
+        Assertions.assertNotNull(result.message());
+    }
+
+    @Test
     @DisplayName("Add Auth to Database")
-    public void addAuthToDatabase() {
+    public void addAuthToDatabaseTest() {
         Assertions.assertNull(sqlDbManager.authAccess().addAuth(normalAuth));
     }
 
     @Test
+    @DisplayName("Add Existing Auth Token to Database")
+    public void addExistingAuthToDatabaseTest() {
+        sqlDbManager.authAccess().addAuth(normalAuth);
+        String result = sqlDbManager.authAccess().addAuth(normalAuth);
+
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.contains("Failed to add auth"));
+    }
+
+    @Test
     @DisplayName("Get Auth From Database")
-    public void getAuthFromDatabase() {
+    public void getAuthFromDatabaseTest() {
         sqlDbManager.authAccess().addAuth(normalAuth);
 
         Assertions.assertNotNull(sqlDbManager.authAccess().getAuth(normalAuth.authToken()));
     }
 
     @Test
+    @DisplayName("Get Auth With Bad Auth Token")
+    public void getAuthWithBadTokenTest() {
+        sqlDbManager.authAccess().addAuth(normalAuth);
+        AuthData result = sqlDbManager.authAccess().getAuth("wrong token");
+
+        Assertions.assertNull(result.username());
+        Assertions.assertNull(result.authToken());
+        Assertions.assertEquals("Error: Wrong Auth Token", result.message());
+    }
+
+    @Test
     @DisplayName("Add Game to Database")
-    public void addGameToDatabase() {
+    public void addGameToDatabaseTest() {
         Assertions.assertEquals("1", sqlDbManager.gameAccess().addGame(normalGame));
     }
 
     @Test
-    @DisplayName("Get Game From Database")
-    public void getAllGames() {
+    @DisplayName("Add Game to Database")
+    public void addBadGameToDatabaseTest() {
+        GameData badGame = new GameData(null, null, null, null, new ChessGame());
+        String result = sqlDbManager.gameAccess().addGame(badGame);
+
+        Assertions.assertEquals("Error: no game name provided", result);
+    }
+
+    @Test
+    @DisplayName("Normal Get Games From Database")
+    public void normalGetAllGamesTest() {
         GameData game2 = new GameData(
                 2, null, null, "game2", new ChessGame()
         );
@@ -151,8 +200,16 @@ public class DataAccessTests {
     }
 
     @Test
-    @DisplayName("Update Game")
-    public void updateGame() {
+    @DisplayName("Get All Games With Empty Database")
+    public void emptyDatabaseGetAllGamesTestTest() {
+        ListGamesResponse result = sqlDbManager.gameAccess().getAllGames();
+
+        Assertions.assertTrue(result.games().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Normal Update Game")
+    public void normalUpdateGameTest() {
         sqlDbManager.gameAccess().addGame(normalGame);
 
         Assertions.assertNull(
@@ -162,5 +219,12 @@ public class DataAccessTests {
                 sqlDbManager.gameAccess().getAllGames().games().stream()
                         .anyMatch(game -> Objects.equals(game.whiteUsername(), normalUser.username()))
         );
+    }
+
+    @Test
+    @DisplayName("Update Game Bad PlayerColor")
+    public void badPlayerColorUpdateGameTest() {
+        sqlDbManager.gameAccess().addGame(normalGame);
+        //TODO: This
     }
 }

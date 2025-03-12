@@ -46,6 +46,10 @@ public class SqlGameAccess {
     }
 
     public String addGame(GameData game) {
+        if (game.gameName() == null) {
+            return "Error: no game name provided";
+        }
+
         String chessGameJson = gson.toJson(game.game());
         String statement = "INSERT INTO game (white_username, black_username, game_name, game) VALUES (?, ?, ?, ?)";
         try {

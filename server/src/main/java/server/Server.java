@@ -1,8 +1,6 @@
 package server;
 
-import dataaccess.MemoryDatabaseManager;
 import dataaccess.sql.SqlDatabaseManager;
-import exception.ResponseException;
 import service.AuthService;
 import service.GameService;
 import service.UserService;
