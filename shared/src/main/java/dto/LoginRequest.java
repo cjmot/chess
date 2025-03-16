@@ -1,5 +1,3 @@
 package dto;
 
-import model.UserData;
-
-public record LoginRequest(UserData user) { }
+public record LoginRequest(String username, String password) { }

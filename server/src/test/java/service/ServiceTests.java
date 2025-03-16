@@ -74,9 +74,8 @@ public class ServiceTests {
     @DisplayName("Normal login")
     public void normalLogin() {
         dbManager.userAccess().addUser(normalUser);
-        UserData user = new UserData("username", "password", null);
         String expected = "username";
-        LoginResponse result = userService.login(new LoginRequest(user));
+        LoginResponse result = userService.login(new LoginRequest("username", "password"));
 
         Assertions.assertNull(result.message());
         Assertions.assertNotNull(result.authToken());
@@ -87,9 +86,8 @@ public class ServiceTests {
     @DisplayName("Unauthorized login")
     public void unauthorizedLogin() {
         dbManager.userAccess().addUser(normalUser);
-        UserData user = new UserData("username", "wrong password", null);
         String expected = "Error: unauthorized";
-        LoginResponse result = userService.login(new LoginRequest(user));
+        LoginResponse result = userService.login(new LoginRequest("username", "wrong password"));
 
         Assertions.assertEquals(expected, result.message());
         Assertions.assertNull(result.username(), result.authToken());

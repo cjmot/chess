@@ -22,7 +22,7 @@ public class UserService {
     }
 
     public LoginResponse login(LoginRequest req) {
-        LoginResponse userResponse = userAccess.getUser(req.user().username(), req.user().password());
+        LoginResponse userResponse = userAccess.getUser(req.username(), req.password());
         if (userResponse.message() != null) {
             return new LoginResponse(null, null, userResponse.message());
         }

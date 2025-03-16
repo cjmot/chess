@@ -5,7 +5,6 @@ import dto.LoginRequest;
 import dto.LoginResponse;
 import dto.LogoutRequest;
 import dto.LogoutResponse;
-import model.UserData;
 import service.UserService;
 import spark.Request;
 import spark.Response;
@@ -20,13 +19,13 @@ public class SessionHandler implements Handler {
         gson = new Gson();
     }
 
-    public String login(Request req, Response res) {
-        if (notValidJson(req.body())) {
+    public String login(Request jsonReq, Response res) {
+        if (notValidJson(jsonReq.body())) {
             res.status(401);
             return gson.toJson(new LoginResponse(null, null, "Error: unauthorized"));
         }
-        UserData user = gson.fromJson(req.body(), UserData.class);
-        LoginResponse response = userService.login(new LoginRequest(user));
+        LoginRequest request = gson.fromJson(jsonReq.body(), LoginRequest.class);
+        LoginResponse response = userService.login(request);
 
         if (response.message() != null) {
             if (response.message().contains("unauthorized")) {
