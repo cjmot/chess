@@ -37,11 +37,12 @@ public class ServerFacade {
         return this.makeRequest("DELETE", path, request, LogoutResponse.class, request.authToken());
     }
 
-    public ListGamesResponse listGames(ListGamesRequest request) throws ResponseException {
-        throw new RuntimeException("Not implemented");
+    public CreateGameResponse createGame(CreateGameRequest request) throws ResponseException {
+        String path = "/game";
+        return this.makeRequest("POST", path, request, CreateGameResponse.class, request.authToken());
     }
 
-    public CreateGameResponse createGame(CreateGameRequest request) throws ResponseException {
+    public ListGamesResponse listGames(ListGamesRequest request) throws ResponseException {
         throw new RuntimeException("Not implemented");
     }
 

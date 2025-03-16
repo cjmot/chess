@@ -88,12 +88,36 @@ public class ServerFacadeTests {
     @Test
     @DisplayName("Wrong Authentication Logout")
     public void wrongAuthLogoutTest() throws ResponseException {
-        serverFacade.register(normalRegisterReq);
-        serverFacade.login(normalLoginReq);
+        normalLogin();
 
         Assertions.assertThrows(
                 ResponseException.class,
                 () -> serverFacade.logout(new LogoutRequest("wrong token"))
         );
+    }
+
+    @Test
+    @DisplayName("Normal Create Game")
+    public void normalCreateGameTest() throws ResponseException {
+        String token = normalLogin();
+
+        CreateGameResponse response = serverFacade.createGame(new CreateGameRequest("game1", token));
+        Assertions.assertEquals(1, response.gameID());
+    }
+
+    @Test
+    @DisplayName("Bad Auth Create Game")
+    public void badAuthCreateGameTest() throws ResponseException {
+        normalLogin();
+
+        Assertions.assertThrows(
+                ResponseException.class,
+                () -> serverFacade.createGame(new CreateGameRequest("game1", "wrong token"))
+        );
+    }
+
+    private String normalLogin() throws ResponseException {
+        serverFacade.register(normalRegisterReq);
+        return serverFacade.login(normalLoginReq).authToken();
     }
 }
