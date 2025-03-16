@@ -28,7 +28,8 @@ public class ServerFacade {
     }
 
     public LoginResponse login(LoginRequest request) throws ResponseException {
-        throw new RuntimeException("Not implemented");
+        String path = "/session";
+        return this.makeRequest("POST", path, request, LoginResponse.class);
     }
 
     public LogoutResponse logout(LogoutRequest request) throws ResponseException {

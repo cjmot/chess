@@ -1,7 +1,6 @@
 package client;
 
-import dto.RegisterRequest;
-import dto.RegisterResponse;
+import dto.*;
 import exception.ResponseException;
 import model.UserData;
 import org.junit.jupiter.api.*;
@@ -13,7 +12,8 @@ public class ServerFacadeTests {
 
     private static Server server;
     private static ServerFacade serverFacade;
-    private static final UserData normalUser = new UserData("username", "password", "email");
+    RegisterRequest normalRegisterReq = new RegisterRequest("username", "password", "email");
+    LoginRequest normalLoginReq = new LoginRequest("username", "password");
 
     @BeforeAll
     public static void init() {
@@ -43,9 +43,7 @@ public class ServerFacadeTests {
     @Test
     @DisplayName("Normal Register Test")
     public void normalRegisterTest() throws ResponseException {
-        RegisterRequest request = new RegisterRequest("username", "password", "email");
-
-        RegisterResponse response = serverFacade.register(request);
+        RegisterResponse response = serverFacade.register(normalRegisterReq);
 
         Assertions.assertEquals("username", response.username());
     }
@@ -53,10 +51,28 @@ public class ServerFacadeTests {
     @Test
     @DisplayName("Username Already Taken")
     public void usernameTakenTest() throws ResponseException {
-        RegisterRequest request = new RegisterRequest("username", "password", "email");
+        serverFacade.register(normalRegisterReq);
 
-        serverFacade.register(request);
+        Assertions.assertThrows(ResponseException.class, () -> serverFacade.register(normalRegisterReq));
+    }
 
-        Assertions.assertThrows(ResponseException.class, () -> serverFacade.register(request));
+    @Test
+    @DisplayName("Normal Login Test")
+    public void normalLoginTest() throws ResponseException {
+        serverFacade.register(normalRegisterReq);
+
+        LoginResponse response = serverFacade.login(normalLoginReq);
+
+        Assertions.assertEquals("username", response.username());
+    }
+
+    @Test
+    @DisplayName("Wrong Password login")
+    public void wrongPasswordLoginTest() throws ResponseException {
+        serverFacade.register(normalRegisterReq);
+
+        LoginRequest wrongRequest = new LoginRequest("username", "wrongPassword");
+
+        Assertions.assertThrows(ResponseException.class, () -> serverFacade.login(wrongRequest));
     }
 }
