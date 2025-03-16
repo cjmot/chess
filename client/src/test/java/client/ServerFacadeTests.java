@@ -153,6 +153,38 @@ public class ServerFacadeTests {
         );
     }
 
+    @Test
+    @DisplayName("Normal Join Game")
+    public void normalJoinGameTest() throws ResponseException {
+        String token = normalLogin();
+
+        serverFacade.createGame(new CreateGameRequest("game1", token));
+
+        JoinGameResponse response = serverFacade.joinGame(new JoinGameRequest("WHITE", 1, token));
+        Assertions.assertNull(response.message());
+        Assertions.assertTrue(
+                serverFacade.listGames(new ListGamesRequest(token))
+                        .games().stream().anyMatch(
+                                game -> game.whiteUsername().equals("username")
+                        )
+        );
+    }
+
+    @Test
+    @DisplayName("Steal Color Join Game")
+    public void stealColorJoinGameTest() throws ResponseException {
+        String token = normalLogin();
+
+        serverFacade.createGame(new CreateGameRequest("game1", token));
+
+        serverFacade.joinGame(new JoinGameRequest("WHITE", 1, token));
+
+        Assertions.assertThrows(
+                ResponseException.class,
+                () -> serverFacade.joinGame(new JoinGameRequest("WHITE", 1, token))
+        );
+    }
+
     private String normalLogin() throws ResponseException {
         serverFacade.register(normalRegisterReq);
         return serverFacade.login(normalLoginReq).authToken();

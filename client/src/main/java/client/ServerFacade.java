@@ -48,7 +48,8 @@ public class ServerFacade {
     }
 
     public JoinGameResponse joinGame(JoinGameRequest request) throws ResponseException {
-        throw new RuntimeException("Not implemented");
+        String path = "/game";
+        return this.makeRequest("PUT", path, request, JoinGameResponse.class, request.authToken());
     }
 
     private <T> T makeRequest(String method, String path, Object request, Class<T> responseClass, String auth) throws ResponseException {
