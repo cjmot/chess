@@ -43,7 +43,8 @@ public class ServerFacade {
     }
 
     public ListGamesResponse listGames(ListGamesRequest request) throws ResponseException {
-        throw new RuntimeException("Not implemented");
+        String path = "/game";
+        return this.makeRequest("GET", path, request, ListGamesResponse.class, request.authToken());
     }
 
     public JoinGameResponse joinGame(JoinGameRequest request) throws ResponseException {
@@ -55,8 +56,16 @@ public class ServerFacade {
             URL url = (new URI(serverUrl + path)).toURL();
             HttpURLConnection http = (HttpURLConnection) url.openConnection();
             http.setRequestMethod(method);
-            http.setDoOutput(true);
-            writeBody(request, http, auth);
+            if (method.equals("GET")) {
+                if (auth != null) {
+                    http.addRequestProperty("authorization", auth);
+                } else {
+                    throw new ResponseException("Error: no auth passed");
+                }
+            } else {
+                http.setDoOutput(true);
+                writeBody(request, http, auth);
+            }
             http.connect();
             throwIfNotSuccessful(http);
             return readBody(http, responseClass);

@@ -23,10 +23,6 @@ public class GameHandler implements Handler {
     }
 
     public String listGames(Request req, Response res) {
-        if (notValidJson(req.headers("authorization"))) {
-            res.status(401);
-            return gson.toJson(new ListGamesResponse(null, "Error: unauthorized"));
-        }
         String token = gson.fromJson(req.headers("authorization"), String.class);
         ListGamesResponse response = gameService.listGames(new ListGamesRequest(token));
         if (response.message() != null) {

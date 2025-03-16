@@ -116,6 +116,43 @@ public class ServerFacadeTests {
         );
     }
 
+    @Test
+    @DisplayName("Same Name Create Game")
+    public void sameNameCreateGameTest() throws ResponseException {
+        String token = normalLogin();
+
+        serverFacade.createGame(new CreateGameRequest("game1", token));
+
+        Assertions.assertThrows(
+                ResponseException.class,
+                () -> serverFacade.createGame(new CreateGameRequest("game1", token))
+        );
+    }
+
+    @Test
+    @DisplayName("Normal List Games")
+    public void normalListGamesTest() throws ResponseException {
+        String token = normalLogin();
+
+        serverFacade.createGame(new CreateGameRequest("game1", token));
+        serverFacade.createGame(new CreateGameRequest("game2", token));
+        serverFacade.createGame(new CreateGameRequest("game3", token));
+
+        ListGamesResponse response = serverFacade.listGames(new ListGamesRequest(token));
+        Assertions.assertEquals(3, response.games().size());
+    }
+
+    @Test
+    @DisplayName("Bad Auth List Games")
+    public void badAuthListGamesTest() throws ResponseException {
+        normalLogin();
+
+        Assertions.assertThrows(
+                ResponseException.class,
+                () -> serverFacade.listGames(new ListGamesRequest("wrong token"))
+        );
+    }
+
     private String normalLogin() throws ResponseException {
         serverFacade.register(normalRegisterReq);
         return serverFacade.login(normalLoginReq).authToken();
