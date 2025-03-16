@@ -5,6 +5,7 @@ import dto.RegisterResponse;
 import exception.ResponseException;
 import model.UserData;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.function.Executable;
 import server.Server;
 
 
@@ -47,5 +48,15 @@ public class ServerFacadeTests {
         RegisterResponse response = serverFacade.register(request);
 
         Assertions.assertEquals("username", response.username());
+    }
+
+    @Test
+    @DisplayName("Username Already Taken")
+    public void usernameTakenTest() throws ResponseException {
+        RegisterRequest request = new RegisterRequest("username", "password", "email");
+
+        serverFacade.register(request);
+
+        Assertions.assertThrows(ResponseException.class, () -> serverFacade.register(request));
     }
 }
