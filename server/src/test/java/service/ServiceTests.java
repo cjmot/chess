@@ -54,7 +54,7 @@ public class ServiceTests {
     @Test
     @DisplayName("Register normal user")
     public void registerNormalUser() {
-        authService.register(new RegisterRequest(normalUser));
+        authService.register(new RegisterRequest("username", "password", "email"));
         String actual = dbManager.userAccess().getUserByUsername(normalUser.username()).username();
         Assertions.assertEquals(normalUser.username(), actual);
     }
@@ -62,10 +62,10 @@ public class ServiceTests {
     @Test
     @DisplayName("Username already exists")
     public void registerUserExists() {
-        authService.register(new RegisterRequest(normalUser));
+        authService.register(new RegisterRequest("username", "password", "email"));
         RegisterResponse expected = new RegisterResponse(
                 null, null, "Error: already taken");
-        RegisterResponse result = authService.register(new RegisterRequest(normalUser));
+        RegisterResponse result = authService.register(new RegisterRequest("username", "password", "email"));
 
         Assertions.assertEquals(expected, result);
     }
@@ -123,7 +123,7 @@ public class ServiceTests {
     @Test
     @DisplayName("Valid create game")
     public void validCreateGame() {
-        RegisterResponse response = authService.register(new RegisterRequest(normalUser));
+        RegisterResponse response = authService.register(new RegisterRequest("username", "password", "email"));
 
         CreateGameResponse expected = new CreateGameResponse(1, null);
         CreateGameResponse result = gameService.createGame(new CreateGameRequest("game1", response.authToken()));
@@ -135,7 +135,7 @@ public class ServiceTests {
     @Test
     @DisplayName("Unauthorized create game")
     public void unauthorizedCreateGame() {
-        authService.register(new RegisterRequest(normalUser));
+        authService.register(new RegisterRequest("username", "password", "email"));
 
         CreateGameResponse expected = new CreateGameResponse(null, "Error: unauthorized");
         CreateGameResponse result = gameService.createGame(new CreateGameRequest("game1", "wrong token"));

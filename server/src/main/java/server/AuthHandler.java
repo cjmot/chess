@@ -36,19 +36,19 @@ public class AuthHandler implements Handler {
         return gson.toJson(response);
     }
 
-    public String handleRegister(Request request, Response res) {
-        if (notValidJson(request.body())) {
+    public String handleRegister(Request jsonRequest, Response res) {
+        if (notValidJson(jsonRequest.body())) {
             res.status(500);
             return gson.toJson(new RegisterResponse(null, null, "Error: bad request"));
         }
-        UserData user = gson.fromJson(request.body(), UserData.class);
+        RegisterRequest request = gson.fromJson(jsonRequest.body(), RegisterRequest.class);
 
-        if (user.username() == null || user.password() == null || user.email() == null) {
+        if (request.username() == null || request.password() == null || request.email() == null) {
             res.status(400);
             return gson.toJson(new RegisterResponse(null, null, "Error: bad request"));
         }
 
-        RegisterResponse response = authService.register(new RegisterRequest(user));
+        RegisterResponse response = authService.register(request);
 
         if (response.message() != null) {
             if (response.message().contains("already taken")) {

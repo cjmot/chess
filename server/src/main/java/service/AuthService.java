@@ -8,6 +8,7 @@ import dto.ClearResponse;
 import dto.RegisterRequest;
 import dto.RegisterResponse;
 import model.AuthData;
+import model.UserData;
 
 import java.util.UUID;
 
@@ -41,16 +42,16 @@ public class AuthService {
     }
 
     public RegisterResponse register(RegisterRequest req) {
-        if (userAccess.getUserByUsername(req.user().username()) != null) {
+        if (userAccess.getUserByUsername(req.username()) != null) {
             return new RegisterResponse(null, null, "Error: already taken");
         }
 
-        String addedMessage = userAccess.addUser(req.user());
+        String addedMessage = userAccess.addUser(new UserData(req.username(), req.password(), req.email()));
         if (addedMessage != null) {
             return new RegisterResponse(null, null, addedMessage);
         }
 
-        AuthData newAuth = new AuthData(req.user().username(), UUID.randomUUID().toString(), null);
+        AuthData newAuth = new AuthData(req.username(), UUID.randomUUID().toString(), null);
         addedMessage = authAccess.addAuth(newAuth);
         if (addedMessage != null) {
             return new RegisterResponse(null, null, addedMessage);
