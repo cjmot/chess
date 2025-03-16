@@ -19,21 +19,22 @@ public class ServerFacade {
 
     public void clear() throws ResponseException {
         String path = "/db";
-        this.makeRequest("DELETE", path, null, null);
+        this.makeRequest("DELETE", path, null, null, null);
     }
 
     public RegisterResponse register(RegisterRequest request) throws ResponseException {
         String path = "/user";
-        return this.makeRequest("POST", path, request, RegisterResponse.class);
+        return this.makeRequest("POST", path, request, RegisterResponse.class, null);
     }
 
     public LoginResponse login(LoginRequest request) throws ResponseException {
         String path = "/session";
-        return this.makeRequest("POST", path, request, LoginResponse.class);
+        return this.makeRequest("POST", path, request, LoginResponse.class, null);
     }
 
     public LogoutResponse logout(LogoutRequest request) throws ResponseException {
-        throw new RuntimeException("Not implemented");
+        String path = "/session";
+        return this.makeRequest("DELETE", path, request, LogoutResponse.class, request.authToken());
     }
 
     public ListGamesResponse listGames(ListGamesRequest request) throws ResponseException {
@@ -48,14 +49,13 @@ public class ServerFacade {
         throw new RuntimeException("Not implemented");
     }
 
-    private <T> T makeRequest(String method, String path, Object request, Class<T> responseClass) throws ResponseException {
+    private <T> T makeRequest(String method, String path, Object request, Class<T> responseClass, String auth) throws ResponseException {
         try {
             URL url = (new URI(serverUrl + path)).toURL();
             HttpURLConnection http = (HttpURLConnection) url.openConnection();
             http.setRequestMethod(method);
             http.setDoOutput(true);
-
-            writeBody(request, http);
+            writeBody(request, http, auth);
             http.connect();
             throwIfNotSuccessful(http);
             return readBody(http, responseClass);
@@ -78,9 +78,12 @@ public class ServerFacade {
         }
     }
 
-    private static void writeBody(Object request, HttpURLConnection http) throws IOException {
+    private static void writeBody(Object request, HttpURLConnection http, String auth) throws IOException {
         if (request != null) {
             http.addRequestProperty("Content-Type", "application/json");
+            if (auth != null) {
+                http.addRequestProperty("authorization", auth);
+            }
             String reqData = new Gson().toJson(request);
             try (OutputStream reqBody = http.getOutputStream()) {
                 reqBody.write(reqData.getBytes());

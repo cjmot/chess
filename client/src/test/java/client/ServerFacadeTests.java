@@ -12,8 +12,8 @@ public class ServerFacadeTests {
 
     private static Server server;
     private static ServerFacade serverFacade;
-    RegisterRequest normalRegisterReq = new RegisterRequest("username", "password", "email");
-    LoginRequest normalLoginReq = new LoginRequest("username", "password");
+    private final RegisterRequest normalRegisterReq = new RegisterRequest("username", "password", "email");
+    private final LoginRequest normalLoginReq = new LoginRequest("username", "password");
 
     @BeforeAll
     public static void init() {
@@ -74,5 +74,26 @@ public class ServerFacadeTests {
         LoginRequest wrongRequest = new LoginRequest("username", "wrongPassword");
 
         Assertions.assertThrows(ResponseException.class, () -> serverFacade.login(wrongRequest));
+    }
+
+    @Test
+    @DisplayName("Normal Logout Test")
+    public void normalLogoutTest() throws ResponseException {
+        serverFacade.register(normalRegisterReq);
+        String token = serverFacade.login(normalLoginReq).authToken();
+
+        Assertions.assertDoesNotThrow(() -> serverFacade.logout(new LogoutRequest(token)));
+    }
+
+    @Test
+    @DisplayName("Wrong Authentication Logout")
+    public void wrongAuthLogoutTest() throws ResponseException {
+        serverFacade.register(normalRegisterReq);
+        serverFacade.login(normalLoginReq);
+
+        Assertions.assertThrows(
+                ResponseException.class,
+                () -> serverFacade.logout(new LogoutRequest("wrong token"))
+        );
     }
 }

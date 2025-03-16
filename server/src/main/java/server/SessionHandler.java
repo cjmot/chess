@@ -42,11 +42,7 @@ public class SessionHandler implements Handler {
     }
 
     public String logout(Request req, Response res) {
-        if (notValidJson(req.headers("authorization"))) {
-            res.status(401);
-            return gson.toJson(new LogoutResponse("Error: unauthorized"));
-        }
-        String token = gson.fromJson(req.headers("authorization"), String.class);
+        String token = req.headers("Authorization");
         LogoutResponse response = userService.logout(new LogoutRequest(token));
 
         if (response.message() != null) {
