@@ -6,6 +6,10 @@ import exception.ResponseException;
 import model.GameData;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
+import static client.EscapeSequences.*;
 
 public class ChessClient {
 
@@ -15,7 +19,7 @@ public class ChessClient {
     }
 
     private final ServerFacade server;
-    private State state;
+    public State state;
     private String auth;
 
 
@@ -50,20 +54,30 @@ public class ChessClient {
     }
 
     public String help() {
+        var result = new StringBuilder();
+        List<String> prompts;
+
         if (state == State.SIGNEDOUT) {
-            return """
-                    - login <username>
-                    - register <username> <password> <email>
-                    - quit
-                    """;
+            prompts = List.of(
+                    "register <USERNAME> <PASSWORD> <EMAIL>" + PURPLE + " - create a new user",
+                    "login <USERNAME> <PASSWORD>" + PURPLE + " - sign in an existing user",
+                    "quit" + PURPLE + " - exit game interface",
+                    "help" + PURPLE + " - show possible commands"
+            );
+        } else {
+            prompts = List.of(
+                    "list" + PURPLE + " - show all games",
+                    "create <NAME>" + PURPLE + " - create a new game",
+                    "join <ID> <WHITE|BLACK>" + PURPLE + " - join an existing game",
+                    "logout" + PURPLE + " - logout user",
+                    "quit" + PURPLE + " - exit game interface",
+                    "help" + PURPLE + " - show possible commands"
+            );
         }
-        return """
-                - list
-                - create <gamename>
-                - join <gameid>
-                - logout
-                - quit
-                """;
+        for (String prompt : prompts) {
+            result.append(BLUE).append(prompt).append("\n");
+        }
+        return result.toString();
     }
 
     public String register(String... params) throws ResponseException {
@@ -135,26 +149,26 @@ public class ChessClient {
     public String joinGame(String... params) throws ResponseException {
         checkSignedIn("join");
         if (params.length == 2) {
-            String color = params[0];
+            String color = params[1];
             if (color.equals("white")) color = "WHITE";
             else if (color.equals("black")) color = "BLACK";
             else throw new ResponseException("Color not specified: should be 'white' or 'black'");
-            JoinGameRequest request = new JoinGameRequest(color, Integer.parseInt(params[1]), auth);
+            JoinGameRequest request = new JoinGameRequest(color, Integer.parseInt(params[0]), auth);
             server.joinGame(request);
-            return "Joined game as " + params[0];
+            return "Joined game as " + params[1];
         }
         throw new ResponseException("Expected: join <color> <gameID>");
     }
 
     private void checkSignedIn(String action) throws ResponseException {
         if (state == State.SIGNEDOUT) {
-            throw new ResponseException("Can't do '" + action + "' while signed out");
+            throw new ResponseException("Cannot perform '" + action + "' while signed out");
         }
     }
 
     private void checkSignedOut(String action) throws ResponseException {
         if (state == State.SIGNEDIN && auth != null) {
-            throw new ResponseException("Can't do '" + action + "' while signed in");
+            throw new ResponseException("Cannot perform '" + action + "' while signed in");
         }
     }
 }

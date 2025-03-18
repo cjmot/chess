@@ -33,6 +33,7 @@ public class Repl {
     }
 
     public void printPrompt() {
-        System.out.print("\n" + RESET + ">>> " + GREEN);
+        String state = ChessClient.State.SIGNEDOUT == client.state ? "[LOGGED_OUT]" : "[LOGGED_IN]";
+        System.out.print("\n" + RESET + state + ">>> " + GREEN);
     }
 }
