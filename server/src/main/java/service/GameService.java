@@ -45,6 +45,9 @@ public class GameService {
         );
         String addedMessage = gameAccess.addGame(newGame);
         if (addedMessage.contains("Failed to add game")) {
+            if (addedMessage.contains("Duplicate entry")) {
+                return new CreateGameResponse(null, "GameName already taken");
+            }
             return new CreateGameResponse(null, addedMessage);
         }
 
