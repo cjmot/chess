@@ -107,10 +107,17 @@ public class ChessClient {
         checkSignedIn("list");
         ListGamesRequest request = new ListGamesRequest(auth);
         ListGamesResponse response = server.listGames(request);
-        Gson gson = new Gson();
         var result = new StringBuilder();
         for (GameData game : response.games()) {
-            result.append(gson.toJson(game)).append('\n');
+            if (game.whiteUsername() == null) game.setWhiteUsername("none");
+            if (game.blackUsername() == null) game.setBlackUsername("none");
+            result.append(String.format(
+                            "GameID: %d, GameName: '%s', PlayingWhite: '%s', PlayingBlack: '%s'",
+                            game.gameID(),
+                            game.gameName(),
+                            game.whiteUsername(),
+                            game.blackUsername())
+            ).append("\n");
         }
         return result.toString();
     }
@@ -136,7 +143,7 @@ public class ChessClient {
             server.joinGame(request);
             return "Joined game as " + params[0];
         }
-        throw new ResponseException("Expected: join <color> ");
+        throw new ResponseException("Expected: join <color> <gameID>");
     }
 
     private void checkSignedIn(String action) throws ResponseException {
