@@ -93,7 +93,8 @@ public class SqlGameAccess {
         }
     }
 
-    private String checkAndSetDbUsername(ResultSet rs, String username, String playerColor, Integer gameID) throws Exception {
+    private String checkAndSetDbUsername(ResultSet rs, String username, String playerColor, Integer gameID)
+            throws SQLException, ResponseException {
         if (rs.next()) {
             String whiteUsername = rs.getString("white_username");
             String blackUsername = rs.getString("black_username");
@@ -105,7 +106,7 @@ public class SqlGameAccess {
                 return "Error: Color already taken";
             }
         }
-        return "Failed to update game";
+        return "GameID: " + gameID + " doesn't exist.";
     }
 
     private String setDbUsername(String username, String color, Integer gameID) throws ResponseException {
