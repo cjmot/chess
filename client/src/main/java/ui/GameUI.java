@@ -92,49 +92,20 @@ public class GameUI {
         String result = "";
         if (boardPiece.getTeamColor().equals(WHITE)) {
             result += SET_TEXT_COLOR_BLUE;
-            switch (boardPiece.getPieceType()) {
-                case PAWN:
-                    result += " P ";
-                    break;
-                case ROOK:
-                    result += " R ";
-                    break;
-                case BISHOP:
-                    result += " B ";
-                    break;
-                case KNIGHT:
-                    result += " N ";
-                    break;
-                case QUEEN:
-                    result += " Q ";
-                    break;
-                case KING:
-                    result += " K ";
-                    break;
-            }
         } else {
             result += SET_TEXT_COLOR_LIGHT_GREY;
-            switch (boardPiece.getPieceType()) {
-                case PAWN:
-                    result += " P ";
-                    break;
-                case ROOK:
-                    result += " R ";
-                    break;
-                case BISHOP:
-                    result += " B ";
-                    break;
-                case KNIGHT:
-                    result += " N ";
-                    break;
-                case QUEEN:
-                    result += " Q ";
-                    break;
-                case KING:
-                    result += " K ";
-                    break;
-            }
         }
-        return result;
+        return result + getPieceLetter(boardPiece.getPieceType());
+    }
+
+    private String getPieceLetter(ChessPiece.PieceType pieceType) {
+        return switch (pieceType) {
+            case PAWN -> " P ";
+            case ROOK -> " R ";
+            case BISHOP -> " B ";
+            case KNIGHT -> " N ";
+            case QUEEN -> " Q ";
+            case KING -> " K ";
+        };
     }
 }
