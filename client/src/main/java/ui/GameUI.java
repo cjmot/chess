@@ -57,11 +57,11 @@ public class GameUI {
 
     private void setRow(int row, ArrayList<Integer> rows, ArrayList<Integer> cols, String rowName) {
 
-        String oddsColor = SET_BG_COLOR_WHITE;
-        String evensColor = SET_BG_COLOR_BLACK;
+        String oddsColor = SET_BG_COLOR_BLACK;
+        String evensColor = SET_BG_COLOR_WHITE;
         if (row%2==1){
-            oddsColor = SET_BG_COLOR_BLACK;
-            evensColor = SET_BG_COLOR_WHITE;
+            oddsColor = SET_BG_COLOR_WHITE;
+            evensColor = SET_BG_COLOR_BLACK;
         }
 
         for (int i=0; i<=9; i++) {

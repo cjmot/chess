@@ -47,6 +47,7 @@ public class ChessClient {
                 case "create" -> createGame(params);
                 case "list" -> listGames();
                 case "join" -> joinGame(params);
+                case "observe" -> observeGame(params);
                 default -> help();
             };
         } catch (ResponseException e) {
@@ -176,9 +177,27 @@ public class ChessClient {
                     .filter(game -> game.gameID().equals(Integer.parseInt(gameID)))
                     .findFirst()
                     .orElseThrow();
-            return "Joined game as " + gameID + "\n" + new GameUI(gameToJoin, color).printGame() + "\n" + new GameUI(gameToJoin, "BLACK").printGame();
+            return "Joined game " + gameID + "\n" + new GameUI(gameToJoin, color).printGame() + "\n" + new GameUI(gameToJoin, "BLACK").printGame();
         }
         throw new ResponseException("Expected: join <gameID> <color>");
+    }
+
+    public String observeGame(String... params) throws ResponseException {
+        checkSignedIn("observe");
+        if (params.length == 1) {
+            int gameID = Integer.parseInt(params[0]);
+            GameData gameToJoin = null;
+            for (GameData game : games) {
+                if (game.gameID().equals(gameID)) {
+                    gameToJoin = game;
+                }
+            }
+            if (gameToJoin == null) {
+                return "Error: No game found with GameID: " + gameID;
+            }
+            return "Observing game " + gameID + "\n" + new GameUI(gameToJoin, "WHITE").printGame() + "\n" + new GameUI(gameToJoin, "BLACK").printGame();
+        }
+        throw new ResponseException("Expected: observe <GameID>");
     }
 
     private void checkSignedIn(String action) throws ResponseException {
