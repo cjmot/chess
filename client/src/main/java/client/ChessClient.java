@@ -6,10 +6,7 @@ import exception.ResponseException;
 import model.GameData;
 import ui.GameUI;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import static client.EscapeSequences.*;
 
@@ -130,10 +127,14 @@ public class ChessClient {
 
         var result = new StringBuilder();
         for (GameData game : response.games()) {
-            if (game.whiteUsername() == null) game.setWhiteUsername("none");
-            if (game.blackUsername() == null) game.setBlackUsername("none");
+            if (game.whiteUsername() == null) {
+                game.setWhiteUsername(("____"));
+            }
+            if (game.blackUsername() == null) {
+                game.setBlackUsername("____");
+            }
             result.append(String.format(
-                            "GameID: %d, GameName: '%s', PlayingWhite: '%s', PlayingBlack: '%s'",
+                            "%d\n\tGameName: %s,\n\tPlayingWhite: %s,\n\tPlayingBlack: %s",
                             game.gameID(),
                             game.gameName(),
                             game.whiteUsername(),
@@ -159,19 +160,25 @@ public class ChessClient {
         if (params.length == 2) {
             String gameID = params[0];
             String color = params[1];
-            if (color.equals("white")) color = "WHITE";
-            else if (color.equals("black")) color = "BLACK";
-            else throw new ResponseException("Color not specified: should be 'white' or 'black'");
+            if (color.equals("white")) {
+                color = "WHITE";
+            }
+            else if (color.equals("black")) {
+                color = "BLACK";
+            }
+            else {
+                throw new ResponseException("Color not specified: should be 'white' or 'black'");
+            }
             JoinGameRequest request = new JoinGameRequest(color, Integer.parseInt(gameID), auth);
             server.joinGame(request);
 
             GameData gameToJoin = games.stream()
                     .filter(game -> game.gameID().equals(Integer.parseInt(gameID)))
                     .findFirst()
-                    .orElse(null);
+                    .orElseThrow();
             return "Joined game as " + gameID + "\n" + new GameUI(gameToJoin, color).printGame() + "\n" + new GameUI(gameToJoin, "BLACK").printGame();
         }
-        throw new ResponseException("Expected: join <color> <gameID>");
+        throw new ResponseException("Expected: join <gameID> <color>");
     }
 
     private void checkSignedIn(String action) throws ResponseException {
