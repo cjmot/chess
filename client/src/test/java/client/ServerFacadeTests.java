@@ -2,9 +2,7 @@ package client;
 
 import dto.*;
 import exception.ResponseException;
-import model.UserData;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.function.Executable;
 import server.Server;
 
 
@@ -30,8 +28,8 @@ public class ServerFacadeTests {
 
     @AfterAll
     static void stopServer() throws ResponseException {
-        server.stop();
         serverFacade.clear();
+        server.stop();
     }
 
 
