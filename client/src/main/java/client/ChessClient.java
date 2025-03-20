@@ -1,10 +1,12 @@
 package client;
 
-import com.google.gson.Gson;
+import chess.ChessGame;
 import dto.*;
 import exception.ResponseException;
 import model.GameData;
+import ui.GameUI;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -21,11 +23,13 @@ public class ChessClient {
     private final ServerFacade server;
     public State state;
     private String auth;
+    private Collection<GameData> games;
 
 
     public ChessClient(String serverUrl) {
         server = new ServerFacade(serverUrl);
         state = State.SIGNEDOUT;
+        games = new ArrayList<>();
     }
 
     public String eval(String input) {
@@ -121,6 +125,9 @@ public class ChessClient {
         checkSignedIn("list");
         ListGamesRequest request = new ListGamesRequest(auth);
         ListGamesResponse response = server.listGames(request);
+
+        this.games = response.games();
+
         var result = new StringBuilder();
         for (GameData game : response.games()) {
             if (game.whiteUsername() == null) game.setWhiteUsername("none");
@@ -141,6 +148,7 @@ public class ChessClient {
         if (params.length == 1) {
             CreateGameRequest request = new CreateGameRequest(params[0], auth);
             CreateGameResponse response = server.createGame(request);
+            games.add(new GameData(response.gameID(), null, null, params[0], new ChessGame()));
             return String.format("Created game %s with GameID: %d", params[0], response.gameID());
         }
         throw new ResponseException("Expected: create <GameName>");
@@ -149,13 +157,19 @@ public class ChessClient {
     public String joinGame(String... params) throws ResponseException {
         checkSignedIn("join");
         if (params.length == 2) {
+            String gameID = params[0];
             String color = params[1];
             if (color.equals("white")) color = "WHITE";
             else if (color.equals("black")) color = "BLACK";
             else throw new ResponseException("Color not specified: should be 'white' or 'black'");
-            JoinGameRequest request = new JoinGameRequest(color, Integer.parseInt(params[0]), auth);
+            JoinGameRequest request = new JoinGameRequest(color, Integer.parseInt(gameID), auth);
             server.joinGame(request);
-            return "Joined game as " + params[1];
+
+            GameData gameToJoin = games.stream()
+                    .filter(game -> game.gameID().equals(Integer.parseInt(gameID)))
+                    .findFirst()
+                    .orElse(null);
+            return "Joined game as " + gameID + "\n" + new GameUI(gameToJoin, color).printGame() + "\n" + new GameUI(gameToJoin, "BLACK").printGame();
         }
         throw new ResponseException("Expected: join <color> <gameID>");
     }
