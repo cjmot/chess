@@ -1,6 +1,7 @@
 package server;
 
 import dataaccess.sql.SqlDatabaseManager;
+import server.websocket.WebSocketHandler;
 import service.AuthService;
 import service.GameService;
 import service.UserService;
@@ -11,6 +12,7 @@ public class Server {
     private final AuthHandler authHandler;
     private final SessionHandler sessionHandler;
     private final GameHandler gameHandler;
+    private final WebSocketHandler webSocketHandler;
 
     public Server() {
         SqlDatabaseManager dbManager = new SqlDatabaseManager();
@@ -20,12 +22,15 @@ public class Server {
         authHandler = new AuthHandler(authService);
         sessionHandler = new SessionHandler(userService);
         gameHandler = new GameHandler(gameService);
+        webSocketHandler = new WebSocketHandler(authService, gameService);
     }
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
 
         Spark.staticFiles.location("web");
+
+        Spark.webSocket("/ws", webSocketHandler);
 
         Spark.delete("/db", authHandler::handleClear);
 
