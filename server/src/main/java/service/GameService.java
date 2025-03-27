@@ -68,7 +68,10 @@ public class GameService {
         }
 
         return new JoinGameResponse(null);
+    }
 
-
+    public boolean verifyGameID(Integer gameID) {
+        ListGamesResponse response = gameAccess.getAllGames();
+        return response.games().stream().anyMatch((game) -> game.gameID().equals(gameID));
     }
 }

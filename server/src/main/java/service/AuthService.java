@@ -59,4 +59,12 @@ public class AuthService {
 
         return new RegisterResponse(newAuth.username(), newAuth.authToken(), null);
     }
+
+    public AuthData verifyAuth(String authToken) {
+        AuthData response = authAccess.getAuth(authToken);
+        if (response.message() != null) {
+            return new AuthData(null, null, response.message());
+        }
+        return response;
+    }
 }
