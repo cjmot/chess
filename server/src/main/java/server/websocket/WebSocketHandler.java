@@ -4,12 +4,16 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import model.AuthData;
+import model.GameData;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import service.AuthService;
 import service.GameService;
 import websocket.commands.*;
+import websocket.messages.ErrorMessage;
+import websocket.messages.LoadGameMessage;
+import websocket.messages.Notification;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
@@ -34,46 +38,83 @@ public class WebSocketHandler {
         String type = jsonObject.get("commandType").getAsString();
         switch (type) {
             case "CONNECT":
-                ConnectCommand command = gson.fromJson(message, ConnectCommand.class);
-                connect(command, session);
+                ConnectCommand connectCmd = gson.fromJson(message, ConnectCommand.class);
+                connect(connectCmd, session);
+                break;
+            case "LEAVE":
+                LeaveCommand leaveCmd = gson.fromJson(message, LeaveCommand.class);
+                leave(leaveCmd, session);
                 break;
         }
     }
 
     private void connect(ConnectCommand command, Session session) throws IOException {
 
-        if (!verifyInfo(command, session)) {
+        if (badAuth(command.getAuthToken(), session)) {
             return;
         }
 
-        connections.add(command.getAuthToken(), session);
-        String message = String.format("You joined game %d as", command.getGameID());
+        GameData game = verifyGame(command.getGameID(), session);
+        if (game == null) {
+            return;
+        }
 
-        ServerMessage rootMessage = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, message);
+
+        connections.add(command.getAuthToken(), session);
+
+        LoadGameMessage rootMessage = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, game);
         session.getRemote().sendString(rootMessage.toString());
 
-        message = String.format(
+        String message = String.format(
                 "joined game %d as",
                 command.getGameID()
         );
-        var usersMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-        connections.broadcast(command.getAuthToken(), usersMessage);
+        var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message);
+        connections.broadcast(command.getAuthToken(), notification);
     }
 
-    private boolean verifyInfo(ConnectCommand command, Session session) throws IOException {
-        AuthData auth = authService.verifyAuth(command.getAuthToken());
+    private void leave(LeaveCommand command, Session session) throws IOException {
+        if (badAuth(command.getAuthToken(), session)) {
+            return;
+        }
+
+        GameData game = verifyGame(command.getGameID(), session);
+        if (game == null) {
+            return;
+        }
+        if (!gameService.leaveGame(command.getPlayerColor(), command.getGameID())) {
+            String message = "Error: could not leave Game";
+            ServerMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
+            session.getRemote().sendString(response.toString());
+            return;
+        };
+
+        connections.remove(command.getAuthToken());
+
+        String message = "has left the game";
+        var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message);
+        connections.broadcast(command.getAuthToken(), notification);
+    }
+
+    private boolean badAuth(String authToken, Session session) throws IOException {
+        AuthData auth = authService.verifyAuth(authToken);
         if (auth.message() != null) {
             String message = "Error: could not verify authToken";
-            ServerMessage response = new ServerMessage(ServerMessage.ServerMessageType.ERROR, message);
+            ServerMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
             session.getRemote().sendString(response.toString());
-            return false;
+            return true;
         }
-        if (!gameService.verifyGameID(command.getGameID())) {
+        return false;
+    }
+
+    private GameData verifyGame(Integer gameID, Session session) throws IOException {
+        GameData game = gameService.verifyGameID(gameID);
+        if (game == null) {
             String message = "Error: could not verify GameID";
-            ServerMessage response = new ServerMessage(ServerMessage.ServerMessageType.ERROR, message);
+            ServerMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
             session.getRemote().sendString(response.toString());
-            return false;
+            return null;
         }
-        return true;
+        return game;
     }
 }

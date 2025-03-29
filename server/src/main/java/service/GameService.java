@@ -70,8 +70,13 @@ public class GameService {
         return new JoinGameResponse(null);
     }
 
-    public boolean verifyGameID(Integer gameID) {
+    public boolean leaveGame(String playerColor, Integer gameID) {
+        return gameAccess.leaveGame(playerColor, gameID);
+    }
+
+    public GameData verifyGameID(Integer gameID) {
         ListGamesResponse response = gameAccess.getAllGames();
-        return response.games().stream().anyMatch((game) -> game.gameID().equals(gameID));
+        return response.games().stream()
+                .filter((game) -> game.gameID().equals(gameID)).findFirst().orElse(null);
     }
 }

@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import dto.ListGamesResponse;
 import exception.ResponseException;
 import model.GameData;
+import spark.Response;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -91,6 +92,34 @@ public class SqlGameAccess {
         } catch (Exception e) {
             return String.format("Failed to update game: %s", e.getMessage());
         }
+    }
+
+    public boolean leaveGame(String playerColor, Integer gameID) {
+        try (Connection conn = DatabaseManager.getConnection()) {
+            String statement = "SELECT white_username, black_username FROM game WHERE game_id=?";
+            try (PreparedStatement ps = conn.prepareStatement(statement)) {
+                ps.setInt(1, gameID);
+                try (ResultSet rs = ps.executeQuery()) {
+                    return removeDbUsername(rs, playerColor, gameID);
+                }
+            }
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean removeDbUsername(ResultSet rs, String playerColor, Integer gameID) throws SQLException, ResponseException {
+        if (rs.next()) {
+            String statement;
+            if (Objects.equals(playerColor, "WHITE")) {
+                statement = "UPDATE game SET white_username=NULL WHERE game_id=?";
+            } else {
+                statement = "UPDATE game SET black_username=NULL WHERE game_id=?";
+            }
+            SqlDatabaseManager.executeUpdate(statement, gameID);
+            return true;
+        }
+        return false;
     }
 
     private String checkAndSetDbUsername(ResultSet rs, String username, String playerColor, Integer gameID)
