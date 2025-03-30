@@ -74,6 +74,10 @@ public class GameService {
         return gameAccess.leaveGame(playerColor, gameID);
     }
 
+    public boolean markGameOver(Integer gameID) {
+        return gameAccess.markGameOver(gameID);
+    }
+
     public GameData verifyGameID(Integer gameID) {
         ListGamesResponse response = gameAccess.getAllGames();
         return response.games().stream()

@@ -45,6 +45,10 @@ public class WebSocketHandler {
                 LeaveCommand leaveCmd = gson.fromJson(message, LeaveCommand.class);
                 leave(leaveCmd, session);
                 break;
+            case "RESIGN":
+                ResignCommand resignCmd = gson.fromJson(message, ResignCommand.class);
+                resign(resignCmd, session);
+                break;
         }
     }
 
@@ -59,8 +63,7 @@ public class WebSocketHandler {
             return;
         }
 
-
-        connections.add(command.getAuthToken(), session);
+        connections.add(command, session);
 
         LoadGameMessage rootMessage = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, game);
         session.getRemote().sendString(rootMessage.toString());
@@ -70,7 +73,7 @@ public class WebSocketHandler {
                 command.getGameID()
         );
         var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message);
-        connections.broadcast(command.getAuthToken(), notification);
+        connections.broadcast(command.getGameID(), command.getAuthToken(), notification);
     }
 
     private void leave(LeaveCommand command, Session session) throws IOException {
@@ -87,13 +90,33 @@ public class WebSocketHandler {
             ServerMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
             session.getRemote().sendString(response.toString());
             return;
-        };
+        }
 
-        connections.remove(command.getAuthToken());
+        connections.remove(command.getGameID(), command.getAuthToken());
 
         String message = "has left the game";
         var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message);
-        connections.broadcast(command.getAuthToken(), notification);
+        connections.broadcast(command.getGameID(), command.getAuthToken(), notification);
+    }
+
+    private void resign(ResignCommand command, Session session) throws IOException {
+        if (badAuth(command.getAuthToken(), session)) {
+            return;
+        }
+
+        GameData game = verifyGame(command.getGameID(), session);
+        if (game == null) {
+            return;
+        }
+        if (!gameService.markGameOver(command.getGameID())) {
+            String message = "Error: failed to resign";
+            ErrorMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
+            session.getRemote().sendString(response.toString());
+            return;
+        }
+        String message = "has resigned";
+        var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message);
+        connections.broadcast(command.getGameID(), null, notification);
     }
 
     private boolean badAuth(String authToken, Session session) throws IOException {

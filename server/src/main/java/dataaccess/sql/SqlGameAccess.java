@@ -28,6 +28,7 @@ public class SqlGameAccess {
                       white_username varchar(256),
                       black_username varchar(256),
                       game_name varchar(256) UNIQUE,
+                      game_over BOOLEAN DEFAULT FALSE,
                       game JSON NOT NULL
                     );
                     """;
@@ -103,6 +104,16 @@ public class SqlGameAccess {
                     return removeDbUsername(rs, playerColor, gameID);
                 }
             }
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean markGameOver(Integer gameID) {
+        try (Connection conn = DatabaseManager.getConnection()) {
+            String statement = "UPDATE game SET game_over=TRUE WHERE game_id=?";
+            SqlDatabaseManager.executeUpdate(statement, gameID);
+            return true;
         } catch (Exception e) {
             return false;
         }
