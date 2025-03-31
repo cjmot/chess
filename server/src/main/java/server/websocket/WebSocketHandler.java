@@ -104,11 +104,16 @@ public class WebSocketHandler {
         if (game == null) {
             return;
         }
-        if (!gameService.leaveGame(command.getPlayerColor(), command.getGameID())) {
-            String message = "Error: could not leave game";
-            ServerMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
-            session.getRemote().sendString(response.toString());
-            return;
+
+        boolean player = auth.username().equals(game.whiteUsername()) || auth.username().equals(game.blackUsername());
+        if (player) {
+            String playerColor = auth.username().equals(game.whiteUsername()) ? "WHITE" : "BLACK";
+            if (!gameService.leaveGame(playerColor, command.getGameID())) {
+                String message = "Error: could not leave game";
+                ServerMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
+                session.getRemote().sendString(response.toString());
+                return;
+            }
         }
 
         connections.remove(command.getGameID(), command.getAuthToken());
