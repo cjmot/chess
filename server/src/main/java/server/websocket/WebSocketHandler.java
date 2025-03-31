@@ -53,8 +53,8 @@ public class WebSocketHandler {
     }
 
     private void connect(ConnectCommand command, Session session) throws IOException {
-
-        if (badAuth(command.getAuthToken(), session)) {
+        AuthData auth = getAuth(command.getAuthToken(), session);
+        if (auth == null) {
             return;
         }
 
@@ -69,15 +69,15 @@ public class WebSocketHandler {
         session.getRemote().sendString(rootMessage.toString());
 
         String message = String.format(
-                "joined game %d as",
-                command.getGameID()
+                "%s joined game as %s", auth.username(), command.getConnType().toString().toLowerCase()
         );
         var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message);
         connections.broadcast(command.getGameID(), command.getAuthToken(), notification);
     }
 
     private void leave(LeaveCommand command, Session session) throws IOException {
-        if (badAuth(command.getAuthToken(), session)) {
+        AuthData auth = getAuth(command.getAuthToken(), session);
+        if (auth == null) {
             return;
         }
 
@@ -86,7 +86,7 @@ public class WebSocketHandler {
             return;
         }
         if (!gameService.leaveGame(command.getPlayerColor(), command.getGameID())) {
-            String message = "Error: could not leave Game";
+            String message = "Error: could not leave game";
             ServerMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
             session.getRemote().sendString(response.toString());
             return;
@@ -94,13 +94,14 @@ public class WebSocketHandler {
 
         connections.remove(command.getGameID(), command.getAuthToken());
 
-        String message = "has left the game";
+        String message = String.format("%s has left the game", auth.username());
         var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message);
         connections.broadcast(command.getGameID(), command.getAuthToken(), notification);
     }
 
     private void resign(ResignCommand command, Session session) throws IOException {
-        if (badAuth(command.getAuthToken(), session)) {
+        AuthData auth = getAuth(command.getAuthToken(), session);
+        if (auth == null) {
             return;
         }
 
@@ -114,26 +115,26 @@ public class WebSocketHandler {
             session.getRemote().sendString(response.toString());
             return;
         }
-        String message = "has resigned";
+        String message = String.format("%s has resigned", auth.username());
         var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message);
         connections.broadcast(command.getGameID(), null, notification);
     }
 
-    private boolean badAuth(String authToken, Session session) throws IOException {
+    private AuthData getAuth(String authToken, Session session) throws IOException {
         AuthData auth = authService.verifyAuth(authToken);
         if (auth.message() != null) {
             String message = "Error: could not verify authToken";
             ServerMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
             session.getRemote().sendString(response.toString());
-            return true;
+            return null;
         }
-        return false;
+        return auth;
     }
 
     private GameData verifyGame(Integer gameID, Session session) throws IOException {
         GameData game = gameService.verifyGameID(gameID);
         if (game == null) {
-            String message = "Error: could not verify GameID";
+            String message = String.format("Error: no game with GameID %d", gameID);
             ServerMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
             session.getRemote().sendString(response.toString());
             return null;
