@@ -102,11 +102,11 @@ function joinGame() {
 let lastMove = {
   startPosition: {
     row: 1,
-    column: 1,
+    col: 1,
   },
   endPosition: {
     row: 1,
-    column: 1,
+    col: 1,
   },
   promotionPiece: null,
 };
@@ -183,7 +183,7 @@ function displayMessage(message) {
 
 
 function connect() {
-  displayCommand("CONNECT")
+  displayCommand("CONNECT", {connType: "OBSERVER"})
 }
 function makeMove() {
   displayCommand("MAKE_MOVE", {move: lastMove})
