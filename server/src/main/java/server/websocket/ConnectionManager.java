@@ -16,17 +16,16 @@ public class ConnectionManager {
         Integer gameID = command.getGameID();
         ConnectCommand.ConnectionType connType = command.getConnType();
         var connection = new Connection(token, session);
-        var gameConnections = connections.get(gameID);
-        if (gameConnections == null) {
-            gameConnections = new GameConnections();
-            gameConnections.add(token, connection);
+        if (connections.get(gameID) == null) {
+            GameConnections newGameConnections = new GameConnections();
+            connections.put(gameID, newGameConnections);
         }
         if (connType == ConnectCommand.ConnectionType.BLACK) {
-            gameConnections.blackPlayer = token;
+            connections.get(gameID).blackPlayer = token;
         } else if (connType == ConnectCommand.ConnectionType.WHITE) {
-            gameConnections.whitePlayer = token;
+            connections.get(gameID).whitePlayer = token;
         }
-        connections.put(gameID, gameConnections);
+        connections.get(gameID).add(token, connection);
     }
 
     public void remove(Integer gameID, String token) {

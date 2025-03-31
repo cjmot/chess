@@ -78,6 +78,10 @@ public class GameService {
         return gameAccess.markGameOver(gameID);
     }
 
+    public boolean updateGame(GameData game) {
+        return gameAccess.changeGame(game);
+    }
+
     public GameData verifyGameID(Integer gameID) {
         ListGamesResponse response = gameAccess.getAllGames();
         return response.games().stream()

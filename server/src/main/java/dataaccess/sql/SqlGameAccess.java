@@ -110,9 +110,20 @@ public class SqlGameAccess {
     }
 
     public boolean markGameOver(Integer gameID) {
-        try (Connection conn = DatabaseManager.getConnection()) {
+        try {
             String statement = "UPDATE game SET game_over=TRUE WHERE game_id=?";
             SqlDatabaseManager.executeUpdate(statement, gameID);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean changeGame(GameData game) {
+        try {
+            String chessGameJson = gson.toJson(game.game());
+            String statement = "UPDATE game SET game=? WHERE game_id=?";
+            SqlDatabaseManager.executeUpdate(statement, chessGameJson, game.gameID());
             return true;
         } catch (Exception e) {
             return false;

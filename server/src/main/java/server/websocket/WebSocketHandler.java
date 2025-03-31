@@ -1,5 +1,8 @@
 package server.websocket;
 
+import chess.ChessMove;
+import chess.ChessPosition;
+import chess.InvalidMoveException;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -25,6 +28,9 @@ public class WebSocketHandler {
     private final AuthService authService;
     private final GameService gameService;
 
+    private final String[] rows = {"1", "2", "3", "4", "5", "6", "7", "8"};
+    private final String[] cols = {"h", "g", "f", "e", "d", "c", "b", "a"};
+
     public WebSocketHandler(AuthService authService, GameService gameService) {
         this.connections = new ConnectionManager();
         this.authService = authService;
@@ -48,6 +54,10 @@ public class WebSocketHandler {
             case "RESIGN":
                 ResignCommand resignCmd = gson.fromJson(message, ResignCommand.class);
                 resign(resignCmd, session);
+                break;
+            case "MAKE_MOVE":
+                MakeMoveCommand moveCmd = gson.fromJson(message, MakeMoveCommand.class);
+                makeMove(moveCmd, session);
                 break;
         }
     }
@@ -118,6 +128,46 @@ public class WebSocketHandler {
         String message = String.format("%s has resigned", auth.username());
         var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message);
         connections.broadcast(command.getGameID(), null, notification);
+    }
+
+    private void makeMove(MakeMoveCommand command, Session session) throws IOException {
+        AuthData auth = authService.verifyAuth(command.getAuthToken());
+        if (auth == null) {
+            return;
+        }
+
+        GameData game = verifyGame(command.getGameID(), session);
+        if (game == null) {
+            return;
+        }
+
+        ChessMove moveToMake = command.getMove();
+        try {
+            game.game().makeMove(moveToMake);
+            if (!gameService.updateGame(game)) {
+                String message = "Error: failed to make move";
+                ErrorMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
+                session.getRemote().sendString(response.toString());
+            } else {
+                var notification = getNotification(moveToMake, auth);
+                connections.broadcast(command.getGameID(), command.getAuthToken(), notification);
+                LoadGameMessage loadGame = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, game);
+                connections.broadcast(command.getGameID(), null, loadGame);
+            }
+        } catch (InvalidMoveException e) {
+            String message = "Error: invalid move";
+            ErrorMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
+            session.getRemote().sendString(response.toString());
+        }
+    }
+
+    private Notification getNotification(ChessMove moveToMake, AuthData auth) {
+        ChessPosition startPos = moveToMake.getStartPosition();
+        ChessPosition endPos = moveToMake.getEndPosition();
+        String start = String.format("%s%s", cols[startPos.getColumn() - 1], rows[startPos.getRow() - 1]);
+        String end = String.format("%s%s", cols[endPos.getColumn() - 1], rows[endPos.getRow() - 1]);
+        String message = String.format("%s made move: %s to %s", auth.username(), start, end);
+        return new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message);
     }
 
     private AuthData getAuth(String authToken, Session session) throws IOException {
