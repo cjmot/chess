@@ -14,16 +14,10 @@ public class ConnectionManager {
     public void add(ConnectCommand command, Session session) {
         String token = command.getAuthToken();
         Integer gameID = command.getGameID();
-        ConnectCommand.ConnectionType connType = command.getConnType();
         var connection = new Connection(token, session);
         if (connections.get(gameID) == null) {
             GameConnections newGameConnections = new GameConnections();
             connections.put(gameID, newGameConnections);
-        }
-        if (connType == ConnectCommand.ConnectionType.BLACK) {
-            connections.get(gameID).blackPlayer = token;
-        } else if (connType == ConnectCommand.ConnectionType.WHITE) {
-            connections.get(gameID).whitePlayer = token;
         }
         connections.get(gameID).add(token, connection);
     }

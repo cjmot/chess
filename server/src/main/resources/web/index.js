@@ -183,7 +183,7 @@ function displayMessage(message) {
 
 
 function connect() {
-  displayCommand("CONNECT", {connType: "OBSERVER"})
+  displayCommand("CONNECT")
 }
 function makeMove() {
   displayCommand("MAKE_MOVE", {move: lastMove})

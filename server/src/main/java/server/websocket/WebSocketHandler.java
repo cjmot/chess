@@ -77,9 +77,16 @@ public class WebSocketHandler {
 
         LoadGameMessage rootMessage = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, game);
         session.getRemote().sendString(rootMessage.toString());
-
+        String connType;
+        if (auth.username().equals(game.whiteUsername())) {
+            connType = "white";
+        } else if (auth.username().equals(game.blackUsername())) {
+            connType = "black";
+        } else {
+            connType = "observer";
+        }
         String message = String.format(
-                "%s joined game as %s", auth.username(), command.getConnType().toString().toLowerCase()
+                "%s joined game as %s", auth.username(), connType
         );
         var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message);
         connections.broadcast(command.getGameID(), command.getAuthToken(), notification);
