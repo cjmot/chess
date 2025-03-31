@@ -2,11 +2,12 @@ package model;
 
 import chess.ChessGame;
 
-public class GameData {
+public class  GameData {
     private final Integer gameID;
     private String whiteUsername;
     private String blackUsername;
     private final String gameName;
+    private boolean gameOver = false;
     private final ChessGame game;
 
     public GameData(Integer gameID, String whiteUsername, String blackUsername, String gameName, ChessGame game) {
@@ -43,5 +44,12 @@ public class GameData {
 
     public ChessGame game() {
         return this.game;
+    }
+
+    public boolean gameOver() {
+        return this.gameOver;
+    }
+    public void setGameOver(boolean value) {
+        this.gameOver = value;
     }
 }

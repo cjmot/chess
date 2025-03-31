@@ -70,7 +70,7 @@ public class SqlGameAccess {
 
     public ListGamesResponse getAllGames() {
         try (Connection conn = DatabaseManager.getConnection()) {
-            String statement = "SELECT game_id, white_username, black_username, game_name, game FROM game";
+            String statement = "SELECT game_id, white_username, black_username, game_name, game_over, game FROM game";
             try (PreparedStatement ps = conn.prepareStatement(statement)) {
                 try (ResultSet rs = ps.executeQuery()) {
                     return getAllGamesFromRs(rs);
@@ -184,7 +184,12 @@ public class SqlGameAccess {
         String whiteUsername = rs.getString("white_username");
         String blackUsername = rs.getString("black_username");
         String gameName = rs.getString("game_name");
+        boolean gameOver = rs.getBoolean("game_over");
         ChessGame game = gson.fromJson(rs.getString("game"), ChessGame.class);
-        return new GameData(gameID, whiteUsername, blackUsername, gameName, game);
+        GameData gameData = new GameData(gameID, whiteUsername, blackUsername, gameName, game);
+        if (gameOver) {
+            gameData.setGameOver(true);
+        }
+        return gameData;
     }
 }

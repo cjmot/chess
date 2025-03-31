@@ -1,5 +1,6 @@
 package server.websocket;
 
+import chess.ChessGame;
 import chess.ChessMove;
 import chess.ChessPosition;
 import chess.InvalidMoveException;
@@ -20,6 +21,7 @@ import websocket.messages.Notification;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
+import java.util.Locale;
 
 @WebSocket
 public class WebSocketHandler {
@@ -138,13 +140,16 @@ public class WebSocketHandler {
     }
 
     private void makeMove(MakeMoveCommand command, Session session) throws IOException {
-        AuthData auth = authService.verifyAuth(command.getAuthToken());
+        AuthData auth = getAuth(command.getAuthToken(), session);
         if (auth == null) {
             return;
         }
 
         GameData game = verifyGame(command.getGameID(), session);
         if (game == null) {
+            return;
+        }
+        if (wrongTurn(game, auth.username(), session) || gameOver(game, session)) {
             return;
         }
 
@@ -166,6 +171,16 @@ public class WebSocketHandler {
             ErrorMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
             session.getRemote().sendString(response.toString());
         }
+    }
+
+    private boolean gameOver(GameData game, Session session) throws IOException {
+        if (game.gameOver()) {
+            String message = "Error: game is over";
+            ErrorMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
+            session.getRemote().sendString(response.toString());
+            return true;
+        }
+        return false;
     }
 
     private Notification getNotification(ChessMove moveToMake, AuthData auth) {
@@ -197,5 +212,26 @@ public class WebSocketHandler {
             return null;
         }
         return game;
+    }
+
+    private boolean wrongTurn(GameData game, String username, Session session) throws IOException {
+        String turn = game.game().getTeamTurn().toString().toLowerCase();
+        if (username.equals(game.whiteUsername()) && turn.equals("white")) {
+            return false;
+        } else if (username.equals(game.blackUsername()) && turn.equals("black")) {
+            return false;
+        }
+
+        String message;
+        if (!username.equals(game.blackUsername()) && !username.equals(game.whiteUsername())) {
+            message = "Error: cannot make move as observer";
+        } else if (username.equals(game.whiteUsername()) && turn.equals("black")) {
+            message = "Error: cannot make move on black's turn";
+        } else {
+            message = "Error: cannot make move on white's turn";
+        }
+        ErrorMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
+        session.getRemote().sendString(response.toString());
+        return true;
     }
 }
