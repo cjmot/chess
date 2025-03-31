@@ -133,6 +133,9 @@ public class WebSocketHandler {
         if (game == null) {
             return;
         }
+        if (gameOver(game, session, "resign") || isObserver(game, auth.username(), session)) {
+            return;
+        }
         if (!gameService.markGameOver(command.getGameID())) {
             String message = "Error: failed to resign";
             ErrorMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
@@ -154,7 +157,7 @@ public class WebSocketHandler {
         if (game == null) {
             return;
         }
-        if (wrongTurn(game, auth.username(), session) || gameOver(game, session)) {
+        if (wrongTurn(game, auth.username(), session) || gameOver(game, session, "make a move")) {
             return;
         }
 
@@ -178,9 +181,9 @@ public class WebSocketHandler {
         }
     }
 
-    private boolean gameOver(GameData game, Session session) throws IOException {
+    private boolean gameOver(GameData game, Session session, String command) throws IOException {
         if (game.gameOver()) {
-            String message = "Error: game is over";
+            String message = String.format("Error: cannot %s when game is over", command);
             ErrorMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
             session.getRemote().sendString(response.toString());
             return true;
@@ -238,5 +241,16 @@ public class WebSocketHandler {
         ErrorMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
         session.getRemote().sendString(response.toString());
         return true;
+    }
+
+    private boolean isObserver(GameData game, String username, Session session) throws IOException {
+        boolean observer = !username.equals(game.whiteUsername()) && !username.equals(game.blackUsername());
+        if (observer) {
+            String message = "Error: cannot resign as observer";
+            ErrorMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
+            session.getRemote().sendString(response.toString());
+            return true;
+        }
+        return false;
     }
 }
