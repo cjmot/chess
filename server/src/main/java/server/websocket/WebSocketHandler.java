@@ -1,14 +1,15 @@
 package server.websocket;
 
-import chess.ChessGame;
 import chess.ChessMove;
 import chess.ChessPosition;
 import chess.InvalidMoveException;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
+import exception.UnauthorizedException;
 import model.AuthData;
 import model.GameData;
+import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
@@ -18,10 +19,8 @@ import websocket.commands.*;
 import websocket.messages.ErrorMessage;
 import websocket.messages.LoadGameMessage;
 import websocket.messages.Notification;
-import websocket.messages.ServerMessage;
 
 import java.io.IOException;
-import java.util.Locale;
 
 @WebSocket
 public class WebSocketHandler {
@@ -41,35 +40,30 @@ public class WebSocketHandler {
 
     @OnWebSocketMessage
     public void onMessage(Session session, String message) throws IOException {
-        Gson gson = new Gson();
-        JsonObject jsonObject = JsonParser.parseString(message).getAsJsonObject();
-        String type = jsonObject.get("commandType").getAsString();
-        switch (type) {
-            case "CONNECT":
-                ConnectCommand connectCmd = gson.fromJson(message, ConnectCommand.class);
-                connect(connectCmd, session);
-                break;
-            case "LEAVE":
-                LeaveCommand leaveCmd = gson.fromJson(message, LeaveCommand.class);
-                leave(leaveCmd, session);
-                break;
-            case "RESIGN":
-                ResignCommand resignCmd = gson.fromJson(message, ResignCommand.class);
-                resign(resignCmd, session);
-                break;
-            case "MAKE_MOVE":
-                MakeMoveCommand moveCmd = gson.fromJson(message, MakeMoveCommand.class);
-                makeMove(moveCmd, session);
-                break;
+        try {
+            Gson gson = createSerializer();
+            UserGameCommand command = gson.fromJson(message, UserGameCommand.class);
+            String username = getUsername(command.getAuthToken());
+
+            switch (command.getCommandType()) {
+                case CONNECT -> connect((ConnectCommand) command, session, username);
+                case MAKE_MOVE -> makeMove((MakeMoveCommand) command, session, username);
+                case LEAVE -> leave((LeaveCommand) command, session, username);
+                case RESIGN -> resign((ResignCommand) command, session, username);
+            }
+        } catch (UnauthorizedException ue) {
+            sendMessage(session.getRemote(), new ErrorMessage("Error: unauthorized"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            sendMessage(session.getRemote(), new ErrorMessage("Error: " + e.getMessage()));
         }
     }
 
-    private void connect(ConnectCommand command, Session session) throws IOException {
-        AuthData auth = getAuth(command.getAuthToken(), session);
-        if (auth == null) {
-            return;
-        }
+    private void sendMessage(RemoteEndpoint remote, ErrorMessage errorMessage) throws IOException {
+        remote.sendString(errorMessage.toString());
+    }
 
+    private void connect(ConnectCommand command, Session session, String username) throws IOException {
         GameData game = verifyGame(command.getGameID(), session);
         if (game == null) {
             return;
@@ -77,87 +71,71 @@ public class WebSocketHandler {
 
         connections.add(command, session);
 
-        LoadGameMessage rootMessage = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, game);
+        LoadGameMessage rootMessage = new LoadGameMessage(game);
         session.getRemote().sendString(rootMessage.toString());
         String connType;
-        if (auth.username().equals(game.whiteUsername())) {
+        if (username.equals(game.whiteUsername())) {
             connType = "white";
-        } else if (auth.username().equals(game.blackUsername())) {
+        } else if (username.equals(game.blackUsername())) {
             connType = "black";
         } else {
             connType = "observer";
         }
         String message = String.format(
-                "%s joined game as %s", auth.username(), connType
+                "%s joined game as %s", username, connType
         );
-        var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message);
+        var notification = new Notification(message);
         connections.broadcast(command.getGameID(), command.getAuthToken(), notification);
     }
 
-    private void leave(LeaveCommand command, Session session) throws IOException {
-        AuthData auth = getAuth(command.getAuthToken(), session);
-        if (auth == null) {
-            return;
-        }
-
+    private void leave(LeaveCommand command, Session session, String username) throws IOException {
         GameData game = verifyGame(command.getGameID(), session);
         if (game == null) {
             return;
         }
 
-        boolean player = auth.username().equals(game.whiteUsername()) || auth.username().equals(game.blackUsername());
+        boolean player = username.equals(game.whiteUsername()) || username.equals(game.blackUsername());
         if (player) {
-            String playerColor = auth.username().equals(game.whiteUsername()) ? "WHITE" : "BLACK";
+            String playerColor = username.equals(game.whiteUsername()) ? "WHITE" : "BLACK";
             if (!gameService.leaveGame(playerColor, command.getGameID())) {
                 String message = "Error: could not leave game";
-                ServerMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
-                session.getRemote().sendString(response.toString());
+                sendMessage(session.getRemote(), new ErrorMessage(message));
                 return;
             }
         }
 
         connections.remove(command.getGameID(), command.getAuthToken());
 
-        String message = String.format("%s has left the game", auth.username());
-        var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message);
+        String message = String.format("%s has left the game", username);
+        var notification = new Notification(message);
         connections.broadcast(command.getGameID(), command.getAuthToken(), notification);
     }
 
-    private void resign(ResignCommand command, Session session) throws IOException {
-        AuthData auth = getAuth(command.getAuthToken(), session);
-        if (auth == null) {
-            return;
-        }
-
+    private void resign(ResignCommand command, Session session, String username) throws IOException {
         GameData game = verifyGame(command.getGameID(), session);
         if (game == null) {
             return;
         }
-        if (gameOver(game, session, "resign") || isObserver(game, auth.username(), session)) {
+        if (gameOver(game, session, "resign") || isObserver(game, username, session)) {
             return;
         }
         if (!gameService.markGameOver(command.getGameID())) {
             String message = "Error: failed to resign";
-            ErrorMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
-            session.getRemote().sendString(response.toString());
+            sendMessage(session.getRemote(), new ErrorMessage(message));
             return;
         }
-        String message = String.format("%s has resigned", auth.username());
-        var notification = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message);
+        String message = String.format("%s has resigned", username);
+        var notification = new Notification(message);
         connections.broadcast(command.getGameID(), null, notification);
     }
 
-    private void makeMove(MakeMoveCommand command, Session session) throws IOException {
-        AuthData auth = getAuth(command.getAuthToken(), session);
-        if (auth == null) {
-            return;
-        }
+    private void makeMove(MakeMoveCommand command, Session session, String username) throws IOException {
 
         GameData game = verifyGame(command.getGameID(), session);
         if (game == null) {
             return;
         }
-        if (wrongTurn(game, auth.username(), session) || gameOver(game, session, "make a move")) {
+        if (wrongTurn(game, username, session) || gameOver(game, session, "make a move")) {
             return;
         }
 
@@ -166,57 +144,50 @@ public class WebSocketHandler {
             game.game().makeMove(moveToMake);
             if (!gameService.updateGame(game)) {
                 String message = "Error: failed to make move";
-                ErrorMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
-                session.getRemote().sendString(response.toString());
+                sendMessage(session.getRemote(), new ErrorMessage(message));
             } else {
-                var notification = getNotification(moveToMake, auth);
+                var notification = getNotification(moveToMake, username);
                 connections.broadcast(command.getGameID(), command.getAuthToken(), notification);
-                LoadGameMessage loadGame = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, game);
+                LoadGameMessage loadGame = new LoadGameMessage(game);
                 connections.broadcast(command.getGameID(), null, loadGame);
             }
         } catch (InvalidMoveException e) {
             String message = "Error: invalid move";
-            ErrorMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
-            session.getRemote().sendString(response.toString());
+            sendMessage(session.getRemote(), new ErrorMessage(message));
         }
     }
 
     private boolean gameOver(GameData game, Session session, String command) throws IOException {
         if (game.gameOver()) {
             String message = String.format("Error: cannot %s when game is over", command);
-            ErrorMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
-            session.getRemote().sendString(response.toString());
+            sendMessage(session.getRemote(), new ErrorMessage(message));
             return true;
         }
         return false;
     }
 
-    private Notification getNotification(ChessMove moveToMake, AuthData auth) {
+    private Notification getNotification(ChessMove moveToMake, String username) {
         ChessPosition startPos = moveToMake.getStartPosition();
         ChessPosition endPos = moveToMake.getEndPosition();
         String start = String.format("%s%s", cols[startPos.getColumn() - 1], rows[startPos.getRow() - 1]);
         String end = String.format("%s%s", cols[endPos.getColumn() - 1], rows[endPos.getRow() - 1]);
-        String message = String.format("%s made move: %s to %s", auth.username(), start, end);
-        return new Notification(ServerMessage.ServerMessageType.NOTIFICATION, message);
+        String message = String.format("%s made move: %s to %s", username, start, end);
+        return new Notification(message);
     }
 
-    private AuthData getAuth(String authToken, Session session) throws IOException {
+    private String getUsername(String authToken) throws UnauthorizedException {
         AuthData auth = authService.verifyAuth(authToken);
         if (auth.message() != null) {
-            String message = "Error: could not verify authToken";
-            ServerMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
-            session.getRemote().sendString(response.toString());
-            return null;
+            throw new UnauthorizedException("Error: unauthorized");
         }
-        return auth;
+        return auth.username();
     }
 
     private GameData verifyGame(Integer gameID, Session session) throws IOException {
         GameData game = gameService.verifyGameID(gameID);
         if (game == null) {
             String message = String.format("Error: no game with GameID %d", gameID);
-            ServerMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
-            session.getRemote().sendString(response.toString());
+            sendMessage(session.getRemote(), new ErrorMessage(message));
             return null;
         }
         return game;
@@ -238,8 +209,7 @@ public class WebSocketHandler {
         } else {
             message = "Error: cannot make move on white's turn";
         }
-        ErrorMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
-        session.getRemote().sendString(response.toString());
+        sendMessage(session.getRemote(), new ErrorMessage(message));
         return true;
     }
 
@@ -247,10 +217,30 @@ public class WebSocketHandler {
         boolean observer = !username.equals(game.whiteUsername()) && !username.equals(game.blackUsername());
         if (observer) {
             String message = "Error: cannot resign as observer";
-            ErrorMessage response = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, message);
-            session.getRemote().sendString(response.toString());
+            sendMessage(session.getRemote(), new ErrorMessage(message));
             return true;
         }
         return false;
+    }
+
+    public static Gson createSerializer() {
+        GsonBuilder gsonBuilder = new GsonBuilder();
+
+        gsonBuilder.registerTypeAdapter(UserGameCommand.class,
+                (JsonDeserializer<UserGameCommand>) (el, type, ctx) -> {
+                    UserGameCommand command = null;
+                    if (el.isJsonObject()) {
+                        String commandType = el.getAsJsonObject().get("commandType").getAsString();
+                        switch (UserGameCommand.CommandType.valueOf(commandType)) {
+                            case CONNECT -> command = ctx.deserialize(el, ConnectCommand.class);
+                            case RESIGN -> command = ctx.deserialize(el, ResignCommand.class);
+                            case MAKE_MOVE -> command = ctx.deserialize(el, MakeMoveCommand.class);
+                            case LEAVE -> command = ctx.deserialize(el, LeaveCommand.class);
+                        }
+                    }
+                    return command;
+                });
+
+        return gsonBuilder.create();
     }
 }

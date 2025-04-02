@@ -7,8 +7,8 @@ public class ErrorMessage extends ServerMessage {
     private final String errorMessage;
     private final transient Gson gson;
 
-    public ErrorMessage(ServerMessageType type, String errorMessage) {
-        super(type);
+    public ErrorMessage(String errorMessage) {
+        super(ServerMessageType.ERROR);
         this.errorMessage = errorMessage;
         this.gson = new Gson();
     }

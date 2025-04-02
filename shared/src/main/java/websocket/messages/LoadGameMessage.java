@@ -8,8 +8,8 @@ public class LoadGameMessage extends ServerMessage {
     private final GameData game;
     private final transient Gson gson;
 
-    public LoadGameMessage(ServerMessageType type, GameData game) {
-        super(type);
+    public LoadGameMessage(GameData game) {
+        super(ServerMessageType.LOAD_GAME);
         this.game = game;
         this.gson = new Gson();
     }
