@@ -1,4 +1,4 @@
-package ui;
+package client.ui;
 
 import chess.ChessBoard;
 import chess.ChessGame;
@@ -10,7 +10,7 @@ import java.util.*;
 
 import static chess.ChessGame.TeamColor.*;
 
-import static ui.EscapeSequences.*;
+import static client.ui.EscapeSequences.*;
 
 public class GameUI {
     private final String[][] grid;

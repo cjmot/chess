@@ -4,7 +4,7 @@ import chess.ChessGame;
 import dto.*;
 import exception.ResponseException;
 import model.GameData;
-import ui.GameUI;
+import client.ui.GameUI;
 
 import java.util.*;
 
