@@ -1,14 +1,22 @@
 package client;
 
+import client.ui.GameUI;
+import client.websocket.ServerMessageHandler;
+import model.GameData;
+import websocket.messages.ErrorMessage;
+import websocket.messages.LoadGameMessage;
+import websocket.messages.Notification;
+import websocket.messages.ServerMessage;
+
 import java.util.Scanner;
 
 import static client.EscapeSequences.*;
 
-public class Repl {
+public class Repl implements ServerMessageHandler {
     private final ChessClient client;
 
     public Repl(String serverUrl) {
-        client = new ChessClient(serverUrl);
+        client = new ChessClient(serverUrl, this);
     }
 
     public void run() {
@@ -32,8 +40,38 @@ public class Repl {
         System.out.println();
     }
 
+    @Override
+    public void notify(ServerMessage message) {
+        switch (message.getServerMessageType()) {
+            case NOTIFICATION -> displayNotification(((Notification) message).getMessage()   );
+            case ERROR -> displayError(((ErrorMessage) message).getErrorMessage());
+            case LOAD_GAME -> loadGame(((LoadGameMessage) message).getGame());
+        }
+        printPrompt();
+    }
+
     public void printPrompt() {
-        String state = ChessClient.State.SIGNEDOUT == client.state ? "[LOGGED_OUT]" : "[LOGGED_IN]";
+        String state;
+        if (client.state.equals(ChessClient.State.SIGNEDOUT)) {
+            state = "[LOGGED_OUT]";
+        } else if (client.state.equals(ChessClient.State.SIGNEDIN)) {
+            state = "[LOGGED_IN]";
+        } else {
+            state = "[IN_GAME]";
+        }
         System.out.print("\n" + RESET + state + ">>> " + GREEN);
+    }
+
+    private void displayNotification(String message) {
+        System.out.println(BLUE + message);
+    }
+
+    private void displayError(String message) {
+        System.out.println(RED + message);
+    }
+
+    private void loadGame(GameData game) {
+        String result = new GameUI(game, game.game().getTeamTurn().toString()).printGame();
+        System.out.print("\n" + result);
     }
 }

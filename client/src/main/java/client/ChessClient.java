@@ -1,6 +1,8 @@
 package client;
 
 import chess.ChessGame;
+import client.websocket.ServerMessageHandler;
+import client.websocket.WebSocketFacade;
 import dto.*;
 import exception.ResponseException;
 import model.GameData;
@@ -14,18 +16,23 @@ public class ChessClient {
 
     public enum State {
         SIGNEDOUT,
-        SIGNEDIN
+        SIGNEDIN,
+        GAMESTATE
     }
 
     private final ServerFacade server;
-    public State state;
-    private String auth;
+    private final String serverUrl;
+    private final ServerMessageHandler messageHandler;
+    private WebSocketFacade ws;
+    public State state = State.SIGNEDOUT;
+    private String authToken;
     private Collection<GameData> games;
 
 
-    public ChessClient(String serverUrl) {
+    public ChessClient(String serverUrl, ServerMessageHandler messageHandler) {
         server = new ServerFacade(serverUrl);
-        state = State.SIGNEDOUT;
+        this.serverUrl = serverUrl;
+        this.messageHandler = messageHandler;
         games = new ArrayList<>();
     }
 
@@ -66,7 +73,7 @@ public class ChessClient {
                     "quit" + PURPLE + " - exit game interface",
                     "help" + PURPLE + " - show possible commands"
             );
-        } else {
+        } else if (state == State.SIGNEDIN) {
             prompts = List.of(
                     "list" + PURPLE + " - show all games",
                     "create <NAME>" + PURPLE + " - create a new game",
@@ -74,6 +81,12 @@ public class ChessClient {
                     "logout" + PURPLE + " - logout user",
                     "quit" + PURPLE + " - exit game interface",
                     "help" + PURPLE + " - show possible commands"
+            );
+        } else {
+            prompts = List.of(
+                    "move <STARTPOSITION> <ENDPOSITION>" + PURPLE + " - make a move",
+                    "resign" + PURPLE + " - resign and end the game",
+                    "leave" + PURPLE + " - leave the game"
             );
         }
         for (String prompt : prompts) {
@@ -88,7 +101,7 @@ public class ChessClient {
             RegisterRequest request = new RegisterRequest(params[0], params[1], params[2]);
             RegisterResponse response = server.register(request);
             if (response.authToken() != null) {
-                auth = response.authToken();
+                authToken = response.authToken();
                 state = State.SIGNEDIN;
                 return "Successfully registered " + params[0];
             }
@@ -102,9 +115,9 @@ public class ChessClient {
             LoginRequest request = new LoginRequest(params[0], params[1]);
             LoginResponse response = server.login(request);
             if (response.authToken() != null) {
-                auth = response.authToken();
+                authToken = response.authToken();
                 state = State.SIGNEDIN;
-                return "Successfully logged in as " + params[0];
+                return "Successfully logged in as " + params[0] + "\n";
             }
         }
         throw new ResponseException("Expected: login <username> <password>");
@@ -112,16 +125,16 @@ public class ChessClient {
 
     public String logout() throws ResponseException {
         checkSignedIn("logout");
-        LogoutRequest request = new LogoutRequest(auth);
+        LogoutRequest request = new LogoutRequest(authToken);
         server.logout(request);
-        auth = null;
+        authToken = null;
         state = State.SIGNEDOUT;
         return "Successfully logged out";
     }
 
     public String listGames() throws ResponseException {
         checkSignedIn("list");
-        ListGamesRequest request = new ListGamesRequest(auth);
+        ListGamesRequest request = new ListGamesRequest(authToken);
         ListGamesResponse response = server.listGames(request);
 
         this.games = response.games();
@@ -148,7 +161,7 @@ public class ChessClient {
     public String createGame(String... params) throws ResponseException {
         checkSignedIn("create");
         if (params.length == 1) {
-            CreateGameRequest request = new CreateGameRequest(params[0], auth);
+            CreateGameRequest request = new CreateGameRequest(params[0], authToken);
             CreateGameResponse response = server.createGame(request);
             games.add(new GameData(response.gameID(), null, null, params[0], new ChessGame()));
             return String.format("Created game %s with GameID: %d", params[0], response.gameID());
@@ -170,7 +183,7 @@ public class ChessClient {
             else {
                 throw new ResponseException("Color not specified: should be 'white' or 'black'");
             }
-            JoinGameRequest request = new JoinGameRequest(color, Integer.parseInt(gameID), auth);
+            JoinGameRequest request = new JoinGameRequest(color, Integer.parseInt(gameID), authToken);
             server.joinGame(request);
 
             GameData gameToJoin = games.stream()
@@ -195,7 +208,12 @@ public class ChessClient {
             if (gameToJoin == null) {
                 return "Error: No game found with GameID: " + gameID;
             }
-            return "Observing game " + gameID + "\n" + new GameUI(gameToJoin, "WHITE").printGame() + "\n" + new GameUI(gameToJoin, "BLACK").printGame();
+
+            state = State.GAMESTATE;
+            ws = new WebSocketFacade(serverUrl, messageHandler);
+            ws.observeGame(authToken, gameID);
+
+            return "Observing game " + gameID + "\n";
         }
         throw new ResponseException("Expected: observe <GameID>");
     }
@@ -207,8 +225,14 @@ public class ChessClient {
     }
 
     private void checkSignedOut(String action) throws ResponseException {
-        if (state == State.SIGNEDIN && auth != null) {
+        if (state == State.SIGNEDIN && authToken != null) {
             throw new ResponseException("Cannot perform '" + action + "' while signed in");
+        }
+    }
+
+    private void checkGameState(String action) throws ResponseException {
+        if (state != State.GAMESTATE) {
+            throw new ResponseException("Cannot perform '" + action + "' while in game");
         }
     }
 }
