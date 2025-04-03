@@ -28,6 +28,7 @@ public class WebSocketHandler {
     private final ConnectionManager connections;
     private final AuthService authService;
     private final GameService gameService;
+    private final Gson gson = createSerializer();
 
     private final String[] rows = {"1", "2", "3", "4", "5", "6", "7", "8"};
     private final String[] cols = {"h", "g", "f", "e", "d", "c", "b", "a"};
@@ -41,7 +42,6 @@ public class WebSocketHandler {
     @OnWebSocketMessage
     public void onMessage(Session session, String message) throws IOException {
         try {
-            Gson gson = createSerializer();
             UserGameCommand command = gson.fromJson(message, UserGameCommand.class);
             String username = getUsername(command.getAuthToken());
 
@@ -72,7 +72,7 @@ public class WebSocketHandler {
         connections.add(command, session);
 
         LoadGameMessage rootMessage = new LoadGameMessage(game);
-        session.getRemote().sendString(rootMessage.toString());
+        session.getRemote().sendString(gson.toJson(rootMessage));
         String connType;
         if (username.equals(game.whiteUsername())) {
             connType = "white";
