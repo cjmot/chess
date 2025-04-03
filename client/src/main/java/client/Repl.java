@@ -31,10 +31,10 @@ public class Repl implements ServerMessageHandler {
 
             try {
                 result = client.eval(line);
-                System.out.print(BLUE + result);
+                System.out.print(GREEN + result + RESET);
             } catch (Exception e) {
                 String msg = e.getMessage();
-                System.out.print(RED + msg);
+                System.out.print(RED + msg + RESET);
             }
         }
         System.out.println();
@@ -59,15 +59,15 @@ public class Repl implements ServerMessageHandler {
         } else {
             state = "[IN_GAME]";
         }
-        System.out.print("\n" + RESET + state + ">>> " + GREEN);
+        System.out.print("\n" + RESET + state + ">>> " + BLUE);
     }
 
     private void displayNotification(String message) {
-        System.out.println(BLUE + message);
+        System.out.print(BLUE + message);
     }
 
     private void displayError(String message) {
-        System.out.println(RED + message);
+        System.out.print(RED + message);
     }
 
     private void loadGame(GameData game) {

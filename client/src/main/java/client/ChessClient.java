@@ -27,6 +27,8 @@ public class ChessClient {
     public State state = State.SIGNEDOUT;
     private String authToken;
     private Collection<GameData> games;
+    private GameData currentGame = null;
+    private Integer gameID;
 
 
     public ChessClient(String serverUrl, ServerMessageHandler messageHandler) {
@@ -55,10 +57,11 @@ public class ChessClient {
                 case "list" -> listGames();
                 case "join" -> joinGame(params);
                 case "observe" -> observeGame(params);
+                case "leave" -> leaveGame(params);
                 default -> help();
             };
         } catch (ResponseException e) {
-            return e.getMessage();
+            return RED + e.getMessage();
         }
     }
 
@@ -90,7 +93,7 @@ public class ChessClient {
             );
         }
         for (String prompt : prompts) {
-            result.append(BLUE).append(prompt).append("\n");
+            result.append(GREEN).append(prompt).append("\n");
         }
         return result.toString();
     }
@@ -103,10 +106,10 @@ public class ChessClient {
             if (response.authToken() != null) {
                 authToken = response.authToken();
                 state = State.SIGNEDIN;
-                return "Successfully registered " + params[0];
+                return "Successfully registered " + params[0] + "\n";
             }
         }
-        throw new ResponseException("Expected: register <username> <password> <email>");
+        throw new ResponseException("Expected: register <username> <password> <email>\n");
     }
 
     public String login(String... params) throws ResponseException {
@@ -120,7 +123,7 @@ public class ChessClient {
                 return "Successfully logged in as " + params[0] + "\n";
             }
         }
-        throw new ResponseException("Expected: login <username> <password>");
+        throw new ResponseException("Expected: login <username> <password>\n");
     }
 
     public String logout() throws ResponseException {
@@ -129,7 +132,7 @@ public class ChessClient {
         server.logout(request);
         authToken = null;
         state = State.SIGNEDOUT;
-        return "Successfully logged out";
+        return "Successfully logged out\n";
     }
 
     public String listGames() throws ResponseException {
@@ -164,7 +167,7 @@ public class ChessClient {
             CreateGameRequest request = new CreateGameRequest(params[0], authToken);
             CreateGameResponse response = server.createGame(request);
             games.add(new GameData(response.gameID(), null, null, params[0], new ChessGame()));
-            return String.format("Created game %s with GameID: %d", params[0], response.gameID());
+            return String.format("Created game %s with GameID: %d\n", params[0], response.gameID());
         }
         throw new ResponseException("Expected: create <GameName>");
     }
@@ -181,7 +184,7 @@ public class ChessClient {
                 color = "BLACK";
             }
             else {
-                throw new ResponseException("Color not specified: should be 'white' or 'black'");
+                throw new ResponseException("Color not specified: should be 'white' or 'black'\n");
             }
             JoinGameRequest request = new JoinGameRequest(color, Integer.parseInt(gameID), authToken);
             server.joinGame(request);
@@ -192,7 +195,7 @@ public class ChessClient {
                     .orElseThrow();
             return "Joined game " + gameID + "\n" + new GameUI(gameToJoin, color).printGame() + "\n" + new GameUI(gameToJoin, "BLACK").printGame();
         }
-        throw new ResponseException("Expected: join <gameID> <color>");
+        throw new ResponseException("Expected: join <gameID> <color>\n");
     }
 
     public String observeGame(String... params) throws ResponseException {
@@ -206,33 +209,49 @@ public class ChessClient {
                 }
             }
             if (gameToJoin == null) {
-                return "Error: No game found with GameID: " + gameID;
+                return "Error: No game found with GameID: " + gameID + "\n";
             }
 
             state = State.GAMESTATE;
+            this.gameID = gameID;
+            this.currentGame = gameToJoin;
             ws = new WebSocketFacade(serverUrl, messageHandler);
             ws.observeGame(authToken, gameID);
 
-            return "Observing game " + gameID + "\n";
+            return "Observing game " + gameID + "...\n";
         }
-        throw new ResponseException("Expected: observe <GameID>");
+        throw new ResponseException("Expected: observe <GameID>\n");
+    }
+
+    public String leaveGame(String... params) throws ResponseException {
+        checkGameState("leave");
+        if (params.length == 0) {
+            ws.leaveGame(authToken, this.gameID);
+            this.gameID = null;
+            this.currentGame = null;
+            this.ws = null;
+            state = State.SIGNEDIN;
+
+            return "Successfully left game \n";
+        }
+        throw new ResponseException("Expected: leave\n");
     }
 
     private void checkSignedIn(String action) throws ResponseException {
-        if (state == State.SIGNEDOUT) {
-            throw new ResponseException("Cannot perform '" + action + "' while signed out");
+        if (state != State.SIGNEDIN) {
+            throw new ResponseException("Cannot perform '" + action + "' while signed out\n");
         }
     }
 
     private void checkSignedOut(String action) throws ResponseException {
-        if (state == State.SIGNEDIN && authToken != null) {
-            throw new ResponseException("Cannot perform '" + action + "' while signed in");
+        if (state != State.SIGNEDOUT && authToken != null) {
+            throw new ResponseException("Cannot perform '" + action + "' while signed in\n");
         }
     }
 
     private void checkGameState(String action) throws ResponseException {
         if (state != State.GAMESTATE) {
-            throw new ResponseException("Cannot perform '" + action + "' while in game");
+            throw new ResponseException("Cannot perform '" + action + "' while not in game\n");
         }
     }
 }
