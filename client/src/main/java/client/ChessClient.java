@@ -278,6 +278,9 @@ public class ChessClient {
         checkGameState("highlight");
         if (params.length == 1) {
             ChessPosition position = getPosition(params[0]);
+            if (currentGame.game().getBoard().getPiece(position) == null) {
+                throw new ResponseException("Error: no piece at that position");
+            }
             String color = auth.username().equals(currentGame.blackUsername()) ? "BLACK" : "WHITE";
             return new GameUI(currentGame, color).printGame(position);
         }
