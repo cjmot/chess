@@ -125,7 +125,14 @@ public class WebSocketHandler {
             sendMessage(session.getRemote(), new ErrorMessage(message));
             return;
         }
-        String message = String.format("%s has resigned", username);
+        String color = "white";
+        String otherColor = "black";
+        if (username.equals(game.blackUsername())) {
+            color = "black";
+            otherColor = "white";
+        }
+        String resignMessage = String.format("%s has resigned as %s", username, color);
+        String message = String.format("%s\n\n%s wins!\n", resignMessage, otherColor);
         var notification = new Notification(message);
         connections.broadcast(command.getGameID(), null, notification);
     }

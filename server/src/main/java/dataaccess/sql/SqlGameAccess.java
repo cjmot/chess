@@ -83,7 +83,7 @@ public class SqlGameAccess {
 
     public String updateGame(String playerColor, Integer gameID, String username) {
         try (Connection conn = DatabaseManager.getConnection()) {
-            String statement = "SELECT white_username, black_username FROM game WHERE game_id=?";
+            String statement = "SELECT white_username, black_username, game_over FROM game WHERE game_id=?";
             try (PreparedStatement ps = conn.prepareStatement(statement)) {
                 ps.setInt(1, gameID);
                 try (ResultSet rs = ps.executeQuery()) {
@@ -147,6 +147,9 @@ public class SqlGameAccess {
     private String checkAndSetDbUsername(ResultSet rs, String username, String playerColor, Integer gameID)
             throws SQLException, ResponseException {
         if (rs.next()) {
+            if (rs.getBoolean("game_over")) {
+                return "Error: cannot join finished game";
+            }
             String whiteUsername = rs.getString("white_username");
             String blackUsername = rs.getString("black_username");
             if (Objects.equals(playerColor, "WHITE") && whiteUsername == null) {

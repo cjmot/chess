@@ -6,6 +6,7 @@ import com.google.gson.JsonDeserializer;
 import exception.ResponseException;
 import websocket.commands.ConnectCommand;
 import websocket.commands.LeaveCommand;
+import websocket.commands.ResignCommand;
 import websocket.commands.UserGameCommand.CommandType;
 import websocket.messages.ErrorMessage;
 import websocket.messages.LoadGameMessage;
@@ -63,6 +64,15 @@ public class WebSocketFacade extends Endpoint {
     public void leaveGame(String authToken) throws ResponseException {
         try {
             var command = new LeaveCommand(CommandType.LEAVE, authToken, gameID);
+            this.session.getBasicRemote().sendText(gson.toJson(command));
+        } catch (IOException e) {
+            throw new ResponseException(e.getMessage());
+        }
+    }
+
+    public void resign(String authToken) throws ResponseException {
+        try {
+            var command = new ResignCommand(CommandType.RESIGN, authToken, gameID);
             this.session.getBasicRemote().sendText(gson.toJson(command));
         } catch (IOException e) {
             throw new ResponseException(e.getMessage());

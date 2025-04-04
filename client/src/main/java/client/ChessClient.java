@@ -10,6 +10,7 @@ import model.GameData;
 import client.ui.GameUI;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static client.EscapeSequences.*;
 
@@ -27,7 +28,7 @@ public class ChessClient {
     private WebSocketFacade ws;
     public State state = State.SIGNEDOUT;
     public AuthData auth;
-    private Collection<GameData> games;
+    private final ConcurrentHashMap<Integer, GameData> games;
     public GameData currentGame = null;
 
 
@@ -35,7 +36,7 @@ public class ChessClient {
         server = new ServerFacade(serverUrl);
         this.serverUrl = serverUrl;
         this.messageHandler = messageHandler;
-        games = new ArrayList<>();
+        games = new ConcurrentHashMap<>();
     }
 
     public String eval(String input) {
@@ -59,6 +60,7 @@ public class ChessClient {
                 case "observe" -> observeGame(params);
                 case "redraw" -> redraw(params);
                 case "leave" -> leaveGame(params);
+                case "resign" -> resign(params);
                 default -> help();
             };
         } catch (ResponseException e) {
@@ -144,10 +146,10 @@ public class ChessClient {
         ListGamesRequest request = new ListGamesRequest(auth.authToken());
         ListGamesResponse response = server.listGames(request);
 
-        this.games = response.games();
+        response.games().forEach(game -> games.put(game.gameID(), game));
 
         var result = new StringBuilder();
-        for (GameData game : response.games()) {
+        for (GameData game : games.values()) {
             if (game.whiteUsername() == null) {
                 game.setWhiteUsername(("____"));
             }
@@ -170,7 +172,10 @@ public class ChessClient {
         if (params.length == 1) {
             CreateGameRequest request = new CreateGameRequest(params[0], auth.authToken());
             CreateGameResponse response = server.createGame(request);
-            games.add(new GameData(response.gameID(), null, null, params[0], new ChessGame()));
+            games.put(
+                    response.gameID(),
+                    new GameData(response.gameID(), null, null, params[0], new ChessGame())
+            );
             return String.format("Created game %s with GameID: %d\n", params[0], response.gameID());
         }
         throw new ResponseException("Expected: create <GameName>");
@@ -206,13 +211,7 @@ public class ChessClient {
         checkSignedIn("observe");
         if (params.length == 1) {
             int gameID = Integer.parseInt(params[0]);
-            GameData gameToJoin = null;
-            for (GameData game : games) {
-                if (game.gameID().equals(gameID)) {
-                    gameToJoin = game;
-                }
-            }
-            if (gameToJoin == null) {
+            if (games.get(gameID) == null) {
                 return "Error: No game found with GameID: " + gameID + "\n";
             }
 
@@ -243,10 +242,21 @@ public class ChessClient {
         String color = auth.username().equals(currentGame.blackUsername()) ? "BLACK" : "WHITE";
         if (params.length == 0) {
             String result = new GameUI(currentGame, color).printGame();
-            String turn = currentGame.game().getTeamTurn().toString().toLowerCase() + " to move" + "\n";
+            String turn = currentGame.gameOver() ?
+                    "game over\n" : currentGame.game().getTeamTurn().toString().toLowerCase() + " to move" + "\n";
             return "\n" + result + BLUE + turn;
         }
         throw new ResponseException("Expected: redraw");
+    }
+
+    public String resign(String... params) throws ResponseException {
+        checkGameState("resign");
+        if (params.length == 0) {
+            ws.resign(auth.authToken());
+            currentGame.setGameOver(true);
+            return "";
+        }
+        throw new ResponseException("Expected: resign");
     }
 
     private void checkSignedIn(String action) throws ResponseException {
