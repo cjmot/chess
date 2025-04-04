@@ -5,6 +5,7 @@ import client.websocket.ServerMessageHandler;
 import client.websocket.WebSocketFacade;
 import dto.*;
 import exception.ResponseException;
+import model.AuthData;
 import model.GameData;
 import client.ui.GameUI;
 
@@ -25,10 +26,8 @@ public class ChessClient {
     private final ServerMessageHandler messageHandler;
     private WebSocketFacade ws;
     public State state = State.SIGNEDOUT;
-    private String authToken;
+    public AuthData auth;
     private Collection<GameData> games;
-    private GameData currentGame = null;
-    private Integer gameID;
 
 
     public ChessClient(String serverUrl, ServerMessageHandler messageHandler) {
@@ -49,7 +48,7 @@ public class ChessClient {
             }
             var params = Arrays.copyOfRange(tokens, 1, tokens.length);
             return switch (cmd) {
-                case "quit" -> "quit";
+                case "quit" -> "Thank you for playing!";
                 case "register" -> register(params);
                 case "login" -> login(params);
                 case "logout" -> logout();
@@ -104,8 +103,8 @@ public class ChessClient {
             RegisterRequest request = new RegisterRequest(params[0], params[1], params[2]);
             RegisterResponse response = server.register(request);
             if (response.authToken() != null) {
-                authToken = response.authToken();
-                state = State.SIGNEDIN;
+                this.auth = new AuthData(response.username(), response.authToken(), null);
+                this.state = State.SIGNEDIN;
                 return "Successfully registered " + params[0] + "\n";
             }
         }
@@ -118,7 +117,7 @@ public class ChessClient {
             LoginRequest request = new LoginRequest(params[0], params[1]);
             LoginResponse response = server.login(request);
             if (response.authToken() != null) {
-                authToken = response.authToken();
+                this.auth = new AuthData(response.username(), response.authToken(), null);
                 state = State.SIGNEDIN;
                 return "Successfully logged in as " + params[0] + "\n";
             }
@@ -128,16 +127,16 @@ public class ChessClient {
 
     public String logout() throws ResponseException {
         checkSignedIn("logout");
-        LogoutRequest request = new LogoutRequest(authToken);
+        LogoutRequest request = new LogoutRequest(auth.authToken());
         server.logout(request);
-        authToken = null;
+        this.auth = null;
         state = State.SIGNEDOUT;
         return "Successfully logged out\n";
     }
 
     public String listGames() throws ResponseException {
         checkSignedIn("list");
-        ListGamesRequest request = new ListGamesRequest(authToken);
+        ListGamesRequest request = new ListGamesRequest(auth.authToken());
         ListGamesResponse response = server.listGames(request);
 
         this.games = response.games();
@@ -164,7 +163,7 @@ public class ChessClient {
     public String createGame(String... params) throws ResponseException {
         checkSignedIn("create");
         if (params.length == 1) {
-            CreateGameRequest request = new CreateGameRequest(params[0], authToken);
+            CreateGameRequest request = new CreateGameRequest(params[0], auth.authToken());
             CreateGameResponse response = server.createGame(request);
             games.add(new GameData(response.gameID(), null, null, params[0], new ChessGame()));
             return String.format("Created game %s with GameID: %d\n", params[0], response.gameID());
@@ -186,14 +185,14 @@ public class ChessClient {
             else {
                 throw new ResponseException("Color not specified: should be 'white' or 'black'\n");
             }
-            JoinGameRequest request = new JoinGameRequest(color, Integer.parseInt(gameID), authToken);
+            JoinGameRequest request = new JoinGameRequest(color, Integer.parseInt(gameID), auth.authToken());
             server.joinGame(request);
 
-            GameData gameToJoin = games.stream()
-                    .filter(game -> game.gameID().equals(Integer.parseInt(gameID)))
-                    .findFirst()
-                    .orElseThrow();
-            return "Joined game " + gameID + "\n" + new GameUI(gameToJoin, color).printGame() + "\n" + new GameUI(gameToJoin, "BLACK").printGame();
+            state = State.GAMESTATE;
+            ws = new WebSocketFacade(serverUrl, messageHandler, Integer.parseInt(gameID));
+            ws.connectToGame(auth.authToken(), Integer.parseInt(gameID));
+
+            return "Joined game " + gameID + "\n";
         }
         throw new ResponseException("Expected: join <gameID> <color>\n");
     }
@@ -213,10 +212,8 @@ public class ChessClient {
             }
 
             state = State.GAMESTATE;
-            this.gameID = gameID;
-            this.currentGame = gameToJoin;
-            ws = new WebSocketFacade(serverUrl, messageHandler);
-            ws.observeGame(authToken, gameID);
+            ws = new WebSocketFacade(serverUrl, messageHandler, gameID);
+            ws.connectToGame(auth.authToken(), gameID);
 
             return "Observing game " + gameID + "...\n";
         }
@@ -226,9 +223,7 @@ public class ChessClient {
     public String leaveGame(String... params) throws ResponseException {
         checkGameState("leave");
         if (params.length == 0) {
-            ws.leaveGame(authToken, this.gameID);
-            this.gameID = null;
-            this.currentGame = null;
+            ws.leaveGame(auth.authToken());
             this.ws = null;
             state = State.SIGNEDIN;
 
@@ -238,13 +233,15 @@ public class ChessClient {
     }
 
     private void checkSignedIn(String action) throws ResponseException {
-        if (state != State.SIGNEDIN) {
+        if (state == State.SIGNEDOUT) {
             throw new ResponseException("Cannot perform '" + action + "' while signed out\n");
+        } else if (state == State.GAMESTATE) {
+            throw new ResponseException("Cannot perform '" + action + "' while in game\n");
         }
     }
 
     private void checkSignedOut(String action) throws ResponseException {
-        if (state != State.SIGNEDOUT && authToken != null) {
+        if (state != State.SIGNEDOUT && auth.authToken() != null) {
             throw new ResponseException("Cannot perform '" + action + "' while signed in\n");
         }
     }

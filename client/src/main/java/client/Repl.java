@@ -43,7 +43,7 @@ public class Repl implements ServerMessageHandler {
     @Override
     public void notify(ServerMessage message) {
         switch (message.getServerMessageType()) {
-            case NOTIFICATION -> displayNotification(((Notification) message).getMessage()   );
+            case NOTIFICATION -> displayNotification(((Notification) message).getMessage());
             case ERROR -> displayError(((ErrorMessage) message).getErrorMessage());
             case LOAD_GAME -> loadGame(((LoadGameMessage) message).getGame());
         }
@@ -71,7 +71,9 @@ public class Repl implements ServerMessageHandler {
     }
 
     private void loadGame(GameData game) {
-        String result = new GameUI(game, game.game().getTeamTurn().toString()).printGame();
-        System.out.print("\n" + result);
+        String color = client.auth.username().equals(game.blackUsername()) ? "BLACK" : "WHITE";
+        String result = new GameUI(game, color).printGame();
+        String turn = game.game().getTeamTurn().toString().toLowerCase() + " to move" + "\n";
+        System.out.print("\n" + result + BLUE + turn);
     }
 }

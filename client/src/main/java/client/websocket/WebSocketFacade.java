@@ -20,15 +20,17 @@ import java.net.URISyntaxException;
 public class WebSocketFacade extends Endpoint {
 
     private final Gson gson = createSerializer();
+    private final Integer gameID;
 
     Session session;
     ServerMessageHandler serverMessageHandler;
 
-    public WebSocketFacade(String url, ServerMessageHandler handler) throws ResponseException {
+    public WebSocketFacade(String url, ServerMessageHandler handler, Integer gameID) throws ResponseException {
         try {
             url = url.replace("http", "ws");
             URI socketURI = new URI(url + "/ws");
             serverMessageHandler = handler;
+            this.gameID = gameID;
 
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
             this.session = container.connectToServer(this, socketURI);
@@ -49,8 +51,7 @@ public class WebSocketFacade extends Endpoint {
     public void onOpen(Session session, EndpointConfig endpointConfig) {
     }
 
-
-    public void observeGame(String authToken, Integer gameID) throws ResponseException {
+    public void connectToGame(String authToken, Integer gameID) throws ResponseException {
         try {
             var command = new ConnectCommand(CommandType.CONNECT, authToken, gameID);
             this.session.getBasicRemote().sendText(gson.toJson(command));
@@ -59,7 +60,7 @@ public class WebSocketFacade extends Endpoint {
         }
     }
 
-    public void leaveGame(String authToken, Integer gameID) throws ResponseException {
+    public void leaveGame(String authToken) throws ResponseException {
         try {
             var command = new LeaveCommand(CommandType.LEAVE, authToken, gameID);
             this.session.getBasicRemote().sendText(gson.toJson(command));
