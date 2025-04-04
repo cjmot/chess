@@ -106,8 +106,13 @@ public class WebSocketHandler {
         }
 
         connections.remove(command.getGameID(), command.getAuthToken());
-
-        String message = String.format("%s has left the game", username);
+        String connType = "observer";
+        if (username.equals(game.whiteUsername())){
+            connType = "white";
+        } else if (username.equals(game.blackUsername())){
+            connType = "black";
+        }
+        String message = String.format("%s (%s) has left the game", username, connType);
         var notification = new Notification(message);
         connections.broadcast(command.getGameID(), command.getAuthToken(), notification);
     }
