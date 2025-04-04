@@ -4,6 +4,7 @@ import chess.ChessBoard;
 import chess.ChessGame;
 import chess.ChessPiece;
 import chess.ChessPosition;
+import chess.ChessMove;
 import model.GameData;
 
 import java.util.*;
@@ -16,14 +17,16 @@ public class GameUI {
     private final String[][] grid;
     private final ChessBoard board;
     private final ChessGame.TeamColor color;
+    private final GameData game;
 
     public GameUI(GameData game, String color) {
         grid = new String[10][10];
         this.board = game.game().getBoard();
         this.color = color.equals("WHITE") ? WHITE : BLACK;
+        this.game = game;
     }
 
-    public String printGame() {
+    public String printGame(ChessPosition position) {
         StringBuilder result = new StringBuilder();
 
         result.append(SET_TEXT_BOLD);
@@ -44,7 +47,7 @@ public class GameUI {
             if (i == 0 || i == 9) {
                 setEndRows(colNames, i, cols);
             } else {
-                setRow(i, rows, cols, rowNames.get(i - 1));
+                setRow(i, rows, cols, rowNames.get(i - 1), position);
             }
         }
 
@@ -55,7 +58,7 @@ public class GameUI {
         return result.toString();
     }
 
-    private void setRow(int row, ArrayList<Integer> rows, ArrayList<Integer> cols, String rowName) {
+    private void setRow(int row, ArrayList<Integer> rows, ArrayList<Integer> cols, String rowName, ChessPosition highlightPosition) {
 
         String oddsColor = SET_BG_COLOR_BLACK;
         String evensColor = SET_BG_COLOR_WHITE;
@@ -63,17 +66,22 @@ public class GameUI {
             oddsColor = SET_BG_COLOR_WHITE;
             evensColor = SET_BG_COLOR_BLACK;
         }
+        Collection<ChessMove> moves = highlightPosition != null ? game.game().validMoves(highlightPosition) : null;
 
         for (int i=0; i<=9; i++) {
             if (i == 0 || i == 9) {
                 grid[row][i] = RESET_TEXT_COLOR + SET_BG_COLOR_DARK_GREY + rowName + RESET_BG_COLOR;
             } else {
-                String piece = getPiece(board.getPiece(new ChessPosition(rows.get(row), cols.get(i))));
-
-                if (i%2==0) {
-                    grid[row][i] = evensColor + piece;
+                ChessPosition position = new ChessPosition(rows.get(row), cols.get(i));
+                String pieceString = getPiece(board.getPiece(position));
+                if (highlightPosition != null && moves.stream().anyMatch(move -> move.getEndPosition().equals(position))) {
+                    grid[row][i] = SET_BG_COLOR_YELLOW + pieceString;
                 } else {
-                    grid[row][i] = oddsColor + piece;
+                    if (i % 2 == 0) {
+                        grid[row][i] = evensColor + pieceString;
+                    } else {
+                        grid[row][i] = oddsColor + pieceString;
+                    }
                 }
             }
         }

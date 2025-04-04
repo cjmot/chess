@@ -60,21 +60,24 @@ public class ChessGame {
         TeamColor teamColor = piece.getTeamColor();
 
         Collection<ChessMove> origMoves = piece.pieceMoves(board, startPosition);
-        ArrayList<ChessMove> moves = new ArrayList<>(origMoves);
+        ArrayList<ChessMove> legalMoves = new ArrayList<>();
 
-        for (ChessMove move : moves) {
+        for (ChessMove move : origMoves) {
             ChessPiece capturedPiece = board.getPiece(move.getEndPosition());
             board.addPiece(move.getStartPosition(), null);
             board.addPiece(move.getEndPosition(), piece);
-            if (isInCheck(teamColor)) {
-                origMoves.remove(move);
-            }
+
+            boolean inCheck = isInCheck(teamColor);
 
             board.addPiece(move.getStartPosition(), piece);
             board.addPiece(move.getEndPosition(), capturedPiece);
+
+            if (!inCheck) {
+                legalMoves.add(move);
+            }
         }
 
-        return origMoves;
+        return legalMoves;
     }
 
     /**
@@ -91,26 +94,15 @@ public class ChessGame {
                 || validMoves(move.getStartPosition()) == null
                 || board.getPiece(move.getStartPosition()).getTeamColor() != turn
                 || !validMoves(move.getStartPosition()).contains(move)
-                || isInCheck(turn)
         ) {
             throw new InvalidMoveException(invalidMove);
         } else if (move.getPromotionPiece() != null) {
             board.addPiece(move.getEndPosition(), new ChessPiece(turn, move.getPromotionPiece()));
             board.addPiece(move.getStartPosition(), null);
-            if (isInCheck(turn)) {
-                board.addPiece(move.getStartPosition(), new ChessPiece(turn, ChessPiece.PieceType.PAWN));
-                board.addPiece(move.getEndPosition(), null);
-                throw new InvalidMoveException(invalidMove);
-            }
             setTeamTurn(getOtherTeam(turn));
         } else {
             board.addPiece(move.getEndPosition(), board.getPiece(move.getStartPosition()));
             board.addPiece(move.getStartPosition(), null);
-            if (isInCheck(turn)) {
-                board.addPiece(move.getStartPosition(), board.getPiece(move.getEndPosition()));
-                board.addPiece(move.getEndPosition(), null);
-                throw new InvalidMoveException(invalidMove);
-            }
             setTeamTurn(getOtherTeam(turn));
         }
     }

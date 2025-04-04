@@ -1,6 +1,8 @@
 package client;
 
 import chess.ChessGame;
+import chess.ChessMove;
+import chess.ChessPosition;
 import client.websocket.ServerMessageHandler;
 import client.websocket.WebSocketFacade;
 import dto.*;
@@ -61,6 +63,8 @@ public class ChessClient {
                 case "redraw" -> redraw(params);
                 case "leave" -> leaveGame(params);
                 case "resign" -> resign(params);
+                case "move" -> move(params);
+                case "highlight" -> highlight(params);
                 default -> help();
             };
         } catch (ResponseException e) {
@@ -90,7 +94,7 @@ public class ChessClient {
             );
         } else {
             prompts = List.of(
-                    "move <STARTPOSITION> <ENDPOSITION>" + PURPLE + " - make a move",
+                    "move <STARTPOSITION> <ENDPOSITION>" + PURPLE + " - make a move (ex. move c2 c4)",
                     "highlight <POSITION>" + PURPLE + " - highlight possible moves for a piece",
                     "redraw" + PURPLE + " - redraw the chessboard",
                     "resign" + PURPLE + " - resign and end the game",
@@ -157,11 +161,12 @@ public class ChessClient {
                 game.setBlackUsername("____");
             }
             result.append(String.format(
-                            "%d\n\tGameName: %s,\n\tPlayingWhite: %s,\n\tPlayingBlack: %s",
+                            "%d\n\tGameName: %s,\n\tPlayingWhite: %s,\n\tPlayingBlack: %s\n\tGameOver: %s",
                             game.gameID(),
                             game.gameName(),
                             game.whiteUsername(),
-                            game.blackUsername())
+                            game.blackUsername(),
+                            game.gameOver())
             ).append("\n");
         }
         return result.toString();
@@ -241,7 +246,7 @@ public class ChessClient {
         checkGameState("redraw");
         String color = auth.username().equals(currentGame.blackUsername()) ? "BLACK" : "WHITE";
         if (params.length == 0) {
-            String result = new GameUI(currentGame, color).printGame();
+            String result = new GameUI(currentGame, color).printGame(null);
             String turn = currentGame.gameOver() ?
                     "game over\n" : currentGame.game().getTeamTurn().toString().toLowerCase() + " to move" + "\n";
             return "\n" + result + BLUE + turn;
@@ -256,7 +261,41 @@ public class ChessClient {
             currentGame.setGameOver(true);
             return "";
         }
-        throw new ResponseException("Expected: resign");
+        throw new ResponseException("Expected: resign\n");
+    }
+
+    public String move(String... params) throws ResponseException {
+        checkGameState("move");
+        if (params.length == 2) {
+            ChessMove move = new ChessMove(getPosition(params[0]), getPosition(params[1]), null);
+            ws.makeMove(auth.authToken(), move);
+            return "";
+        }
+        throw new ResponseException("Expected: move <STARTPOSITION> <ENDPOSITION>\n");
+    }
+
+    public String highlight(String... params) throws ResponseException {
+        checkGameState("highlight");
+        if (params.length == 1) {
+            ChessPosition position = getPosition(params[0]);
+            String color = auth.username().equals(currentGame.blackUsername()) ? "BLACK" : "WHITE";
+            return new GameUI(currentGame, color).printGame(position);
+        }
+        throw new ResponseException("Expected: highlight <POSITION>\n");
+    }
+
+    private ChessPosition getPosition(String position) throws ResponseException {
+        if (position.length() == 2) {
+            ArrayList<String> cols = new ArrayList<>(List.of("a", "b", "c", "d", "e", "f", "g", "h"));
+            ArrayList<String> rows = new ArrayList<>(List.of("1", "2", "3", "4", "5", "6", "7", "8"));
+            String[] input = position.split("");
+            String row = input[1];
+            String col = input[0];
+            if (cols.contains(col) && rows.contains(row)) {
+                return new ChessPosition(rows.indexOf(row) + 1, cols.indexOf(col) + 1);
+            }
+        }
+        throw new ResponseException(String.format("Error: invalid position '%s'\n", position));
     }
 
     private void checkSignedIn(String action) throws ResponseException {

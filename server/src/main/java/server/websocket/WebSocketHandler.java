@@ -11,7 +11,6 @@ import model.AuthData;
 import model.GameData;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import service.AuthService;
@@ -32,7 +31,7 @@ public class WebSocketHandler {
     private final Gson gson = createSerializer();
 
     private final String[] rows = {"1", "2", "3", "4", "5", "6", "7", "8"};
-    private final String[] cols = {"h", "g", "f", "e", "d", "c", "b", "a"};
+    private final String[] cols = {"a", "b", "c", "d", "e", "f", "g", "h"};
 
     public WebSocketHandler(AuthService authService, GameService gameService) {
         this.connections = new ConnectionManager();
@@ -53,7 +52,7 @@ public class WebSocketHandler {
                 case RESIGN -> resign((ResignCommand) command, session, username);
             }
         } catch (UnauthorizedException ue) {
-            sendMessage(session.getRemote(), new ErrorMessage("Error: unauthorized"));
+            sendMessage(session.getRemote(), new ErrorMessage("Error: unauthorized\n"));
         } catch (Exception e) {
             e.printStackTrace();
             sendMessage(session.getRemote(), new ErrorMessage("Error: " + e.getMessage()));
@@ -69,18 +68,19 @@ public class WebSocketHandler {
         if (game == null) {
             return;
         }
-
+        boolean player = username.equals(game.whiteUsername()) || username.equals(game.blackUsername());
+        if (player && gameOver(game, session, "join")) {
+            return;
+        }
         connections.add(command, session);
 
         LoadGameMessage rootMessage = new LoadGameMessage(game);
         session.getRemote().sendString(gson.toJson(rootMessage));
-        String connType;
+        String connType = "observer";
         if (username.equals(game.whiteUsername())) {
             connType = "white";
         } else if (username.equals(game.blackUsername())) {
             connType = "black";
-        } else {
-            connType = "observer";
         }
         String message = String.format(
                 "%s joined game as %s", username, connType
@@ -99,7 +99,7 @@ public class WebSocketHandler {
         if (player) {
             String playerColor = username.equals(game.whiteUsername()) ? "WHITE" : "BLACK";
             if (!gameService.leaveGame(playerColor, command.getGameID())) {
-                String message = "Error: could not leave game";
+                String message = "\nError: could not leave game\n";
                 sendMessage(session.getRemote(), new ErrorMessage(message));
                 return;
             }
@@ -117,11 +117,11 @@ public class WebSocketHandler {
         if (game == null) {
             return;
         }
-        if (gameOver(game, session, "resign") || isObserver(game, username, session)) {
+        if (isObserver(game, username, session) || gameOver(game, session, "resign")) {
             return;
         }
         if (!gameService.markGameOver(command.getGameID())) {
-            String message = "Error: failed to resign";
+            String message = "\nError: failed to resign\n";
             sendMessage(session.getRemote(), new ErrorMessage(message));
             return;
         }
@@ -150,24 +150,33 @@ public class WebSocketHandler {
         ChessMove moveToMake = command.getMove();
         try {
             game.game().makeMove(moveToMake);
+            if (game.game().isInCheckmate(game.game().getTeamTurn())) {
+                game.setGameOver(true);
+            }
             if (!gameService.updateGame(game)) {
-                String message = "Error: failed to make move";
+                String message = "\nError: failed to make move\n";
                 sendMessage(session.getRemote(), new ErrorMessage(message));
             } else {
-                var notification = getNotification(moveToMake, username);
-                connections.broadcast(command.getGameID(), command.getAuthToken(), notification);
+                Notification notification;
+                if (game.gameOver()) {
+                    notification = new Notification(String.format("%s is in checkmate - %s wins!\n", game.game().getTeamTurn().toString(), username));
+                    connections.broadcast(command.getGameID(), null, notification);
+                } else {
+                    notification = getNotification(moveToMake, username);
+                    connections.broadcast(command.getGameID(), command.getAuthToken(), notification);
+                }
                 LoadGameMessage loadGame = new LoadGameMessage(game);
                 connections.broadcast(command.getGameID(), null, loadGame);
             }
         } catch (InvalidMoveException e) {
-            String message = "Error: invalid move";
+            String message = "Error: invalid move\n";
             sendMessage(session.getRemote(), new ErrorMessage(message));
         }
     }
 
     private boolean gameOver(GameData game, Session session, String command) throws IOException {
         if (game.gameOver()) {
-            String message = String.format("Error: cannot %s when game is over", command);
+            String message = String.format("\nError: cannot %s finished game\n", command);
             sendMessage(session.getRemote(), new ErrorMessage(message));
             return true;
         }
@@ -186,7 +195,7 @@ public class WebSocketHandler {
     private String getUsername(String authToken) throws UnauthorizedException {
         AuthData auth = authService.verifyAuth(authToken);
         if (auth.message() != null) {
-            throw new UnauthorizedException("Error: unauthorized");
+            throw new UnauthorizedException("\nError: unauthorized\n");
         }
         return auth.username();
     }
@@ -194,7 +203,7 @@ public class WebSocketHandler {
     private GameData verifyGame(Integer gameID, Session session) throws IOException {
         GameData game = gameService.verifyGameID(gameID);
         if (game == null) {
-            String message = String.format("Error: no game with GameID %d", gameID);
+            String message = String.format("\nError: no game with GameID %d\n", gameID);
             sendMessage(session.getRemote(), new ErrorMessage(message));
             return null;
         }
@@ -211,11 +220,11 @@ public class WebSocketHandler {
 
         String message;
         if (!username.equals(game.blackUsername()) && !username.equals(game.whiteUsername())) {
-            message = "Error: cannot make move as observer";
+            message = "\nError: cannot make move as observer\n";
         } else if (username.equals(game.whiteUsername()) && turn.equals("black")) {
-            message = "Error: cannot make move on black's turn";
+            message = "\nError: cannot make move on black's turn\n";
         } else {
-            message = "Error: cannot make move on white's turn";
+            message = "\nError: cannot make move on white's turn\n";
         }
         sendMessage(session.getRemote(), new ErrorMessage(message));
         return true;
@@ -224,7 +233,7 @@ public class WebSocketHandler {
     private boolean isObserver(GameData game, String username, Session session) throws IOException {
         boolean observer = !username.equals(game.whiteUsername()) && !username.equals(game.blackUsername());
         if (observer) {
-            String message = "Error: cannot resign as observer";
+            String message = "\nError: cannot resign as observer\n";
             sendMessage(session.getRemote(), new ErrorMessage(message));
             return true;
         }
