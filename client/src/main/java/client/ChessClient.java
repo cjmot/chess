@@ -28,6 +28,7 @@ public class ChessClient {
     public State state = State.SIGNEDOUT;
     public AuthData auth;
     private Collection<GameData> games;
+    public GameData currentGame = null;
 
 
     public ChessClient(String serverUrl, ServerMessageHandler messageHandler) {
@@ -56,6 +57,7 @@ public class ChessClient {
                 case "list" -> listGames();
                 case "join" -> joinGame(params);
                 case "observe" -> observeGame(params);
+                case "redraw" -> redraw(params);
                 case "leave" -> leaveGame(params);
                 default -> help();
             };
@@ -87,8 +89,11 @@ public class ChessClient {
         } else {
             prompts = List.of(
                     "move <STARTPOSITION> <ENDPOSITION>" + PURPLE + " - make a move",
+                    "highlight <POSITION>" + PURPLE + " - highlight possible moves for a piece",
+                    "redraw" + PURPLE + " - redraw the chessboard",
                     "resign" + PURPLE + " - resign and end the game",
-                    "leave" + PURPLE + " - leave the game"
+                    "leave" + PURPLE + " - leave the game",
+                    "help" + PURPLE + " - show possible commands"
             );
         }
         for (String prompt : prompts) {
@@ -224,12 +229,24 @@ public class ChessClient {
         checkGameState("leave");
         if (params.length == 0) {
             ws.leaveGame(auth.authToken());
-            this.ws = null;
+            ws = null;
+            currentGame = null;
             state = State.SIGNEDIN;
 
             return "Successfully left game \n";
         }
         throw new ResponseException("Expected: leave\n");
+    }
+
+    public String redraw(String... params) throws ResponseException {
+        checkGameState("redraw");
+        String color = auth.username().equals(currentGame.blackUsername()) ? "BLACK" : "WHITE";
+        if (params.length == 0) {
+            String result = new GameUI(currentGame, color).printGame();
+            String turn = currentGame.game().getTeamTurn().toString().toLowerCase() + " to move" + "\n";
+            return "\n" + result + BLUE + turn;
+        }
+        throw new ResponseException("Expected: redraw");
     }
 
     private void checkSignedIn(String action) throws ResponseException {

@@ -71,6 +71,7 @@ public class Repl implements ServerMessageHandler {
     }
 
     private void loadGame(GameData game) {
+        client.currentGame = game;
         String color = client.auth.username().equals(game.blackUsername()) ? "BLACK" : "WHITE";
         String result = new GameUI(game, color).printGame();
         String turn = game.game().getTeamTurn().toString().toLowerCase() + " to move" + "\n";
