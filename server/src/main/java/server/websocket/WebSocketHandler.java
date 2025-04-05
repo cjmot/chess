@@ -163,12 +163,11 @@ public class WebSocketHandler {
                 sendMessage(session.getRemote(), new ErrorMessage(message));
             } else {
                 Notification notification;
+                notification = getNotification(moveToMake, username);
+                connections.broadcast(command.getGameID(), command.getAuthToken(), notification);
                 if (game.gameOver()) {
                     notification = new Notification(String.format("%s is in checkmate - %s wins!\n", game.game().getTeamTurn().toString(), username));
                     connections.broadcast(command.getGameID(), null, notification);
-                } else {
-                    notification = getNotification(moveToMake, username);
-                    connections.broadcast(command.getGameID(), command.getAuthToken(), notification);
                 }
                 LoadGameMessage loadGame = new LoadGameMessage(game);
                 connections.broadcast(command.getGameID(), null, loadGame);
