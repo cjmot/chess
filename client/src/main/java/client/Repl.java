@@ -25,7 +25,7 @@ public class Repl implements ServerMessageHandler {
 
         Scanner scanner = new Scanner(System.in);
         String result = "";
-        while (!result.equals("quit")) {
+        while (!result.equals("Thank you for playing!")) {
             printPrompt();
             String line = scanner.nextLine();
 
@@ -63,6 +63,9 @@ public class Repl implements ServerMessageHandler {
     }
 
     private void displayNotification(String message) {
+        if (message.contains("has resigned")) {
+            client.currentGame.setGameOver(true);
+        }
         System.out.print(BLUE + message);
     }
 
