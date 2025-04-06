@@ -122,8 +122,14 @@ public class SqlGameAccess {
     public boolean changeGame(GameData game) {
         try {
             String chessGameJson = gson.toJson(game.game());
-            String statement = "UPDATE game SET game=? WHERE game_id=?";
-            SqlDatabaseManager.executeUpdate(statement, chessGameJson, game.gameID());
+            String statement;
+            if (game.gameOver()) {
+                statement = "UPDATE game SET game=?, game_over=TRUE WHERE game_id=?";
+                SqlDatabaseManager.executeUpdate(statement, chessGameJson, game.gameID());
+            } else {
+                statement = "UPDATE game SET game=? WHERE game_id=?";
+                SqlDatabaseManager.executeUpdate(statement, chessGameJson, game.gameID());
+            }
             return true;
         } catch (Exception e) {
             return false;

@@ -120,7 +120,7 @@ public class WebSocketHandler {
 
     private void resign(ResignCommand command, Session session, String username) throws IOException {
         GameData game = verifyGame(command.getGameID(), session);
-        if (game == null) {
+        if (game == null || gameOver(game, session, "resign")) {
             return;
         }
         if (isObserver(game, username, session) || gameOver(game, session, "resign")) {
@@ -167,7 +167,7 @@ public class WebSocketHandler {
                 notification = getNotification(moveToMake, username);
                 connections.broadcast(command.getGameID(), command.getAuthToken(), notification);
                 if (game.gameOver()) {
-                    notification = new Notification(String.format("%s is in checkmate - %s wins!\n", game.game().getTeamTurn().toString(), username));
+                    notification = new Notification(String.format("%s is in checkmate - %s wins!", game.game().getTeamTurn().toString(), username));
                     connections.broadcast(command.getGameID(), null, notification);
                 }
                 LoadGameMessage loadGame = new LoadGameMessage(game);

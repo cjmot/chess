@@ -80,10 +80,12 @@ public class Repl implements ServerMessageHandler {
         String gameString = new GameUI(game, color).printGame(null);
         String gameState = "";
         ChessGame.TeamColor turn = game.game().getTeamTurn();
-        if (game.game().isInCheck(turn)) {
+        if (game.gameOver()){
+            gameState = "game over";
+        } else if (game.game().isInCheck(turn)) {
             gameState = turn.toString().toLowerCase() + " in check\n";
         }
-        String turnString = !game.gameOver() ? turn.toString().toLowerCase() + " to move\n" : "game over";
+        String turnString = !game.gameOver() ? turn.toString().toLowerCase() + " to move\n" : "\n";
         System.out.print("\n" + gameString + BLUE + gameState + turnString);
     }
 }
