@@ -1,5 +1,6 @@
 package client;
 
+import chess.ChessGame;
 import client.ui.GameUI;
 import client.websocket.ServerMessageHandler;
 import model.GameData;
@@ -76,9 +77,13 @@ public class Repl implements ServerMessageHandler {
     private void loadGame(GameData game) {
         client.currentGame = game;
         String color = client.auth.username().equals(game.blackUsername()) ? "BLACK" : "WHITE";
-        String result = new GameUI(game, color).printGame(null);
-        String turn = game.gameOver() ?
-                "game over\n" : game.game().getTeamTurn().toString().toLowerCase() + " to move" + "\n";
-        System.out.print("\n" + result + BLUE + turn);
+        String gameString = new GameUI(game, color).printGame(null);
+        String gameState = "";
+        ChessGame.TeamColor turn = game.game().getTeamTurn();
+        if (game.game().isInCheck(turn)) {
+            gameState = turn.toString().toLowerCase() + " in check\n";
+        }
+        String turnString = !game.gameOver() ? turn.toString().toLowerCase() + " to move\n" : "game over";
+        System.out.print("\n" + gameString + BLUE + gameState + turnString);
     }
 }
