@@ -179,22 +179,6 @@ public class WebSocketHandler {
         }
     }
 
-    private void sendGameState(UserGameCommand command, GameData game, ChessGame.TeamColor turn, String username, boolean exclude) throws IOException {
-        String excludeToken = exclude ? command.getAuthToken() : null;
-        Notification notification;
-        if (game.gameOver()) {
-            if (game.game().isInCheckmate(turn)){
-                notification = new Notification(String.format("%s is in checkmate - %s wins!\n", turn.toString().toLowerCase(), username));
-            } else {
-                notification = new Notification("Stalemate - no more moves can be made");
-            }
-            connections.broadcast(command.getGameID(), excludeToken, notification);
-        } else if (game.game().isInCheck(turn)) {
-            notification = new Notification(String.format("%s is in check", turn.toString().toLowerCase()));
-            connections.broadcast(command.getGameID(), excludeToken, notification);
-        }
-    }
-
     private boolean gameOver(GameData game, Session session, String command) throws IOException {
         if (game.gameOver()) {
             String message = String.format("\nError: cannot %s finished game\n", command);
