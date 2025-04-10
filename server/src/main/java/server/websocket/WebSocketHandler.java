@@ -167,7 +167,11 @@ public class WebSocketHandler {
                 notification = getNotification(moveToMake, username);
                 connections.broadcast(command.getGameID(), command.getAuthToken(), notification);
                 if (game.gameOver()) {
-                    notification = new Notification(String.format("%s is in checkmate - %s wins!", game.game().getTeamTurn().toString(), username));
+                    String matedUsername = game.whiteUsername();
+                    if (game.game().getTeamTurn().toString().equalsIgnoreCase("black")) {
+                        matedUsername = game.blackUsername();
+                    }
+                    notification = new Notification(String.format("%s is in checkmate - %s wins!", matedUsername, username));
                     connections.broadcast(command.getGameID(), null, notification);
                 }
                 LoadGameMessage loadGame = new LoadGameMessage(game);

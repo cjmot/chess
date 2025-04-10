@@ -83,7 +83,9 @@ public class Repl implements ServerMessageHandler {
         if (game.gameOver()){
             gameState = "game over";
         } else if (game.game().isInCheck(turn)) {
-            gameState = turn.toString().toLowerCase() + " in check\n";
+            String checkedUsername = turn.toString().equalsIgnoreCase("black") ? game.blackUsername()
+                    : game.whiteUsername();
+            gameState = checkedUsername + " in check\n";
         }
         String turnString = !game.gameOver() ? turn.toString().toLowerCase() + " to move\n" : "\n";
         System.out.print("\n" + gameString + BLUE + gameState + turnString);
