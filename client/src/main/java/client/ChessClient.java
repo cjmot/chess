@@ -2,6 +2,7 @@ package client;
 
 import chess.ChessGame;
 import chess.ChessMove;
+import chess.ChessPiece;
 import chess.ChessPosition;
 import client.websocket.ServerMessageHandler;
 import client.websocket.WebSocketFacade;
@@ -269,12 +270,49 @@ public class ChessClient {
 
     public String move(String... params) throws ResponseException {
         checkGameState("move");
-        if (params.length == 2) {
-            ChessMove move = new ChessMove(getPosition(params[0]), getPosition(params[1]), null);
+        if (params.length == 2 || params.length == 3) {
+            ChessPosition start = getPosition(params[0]);
+            ChessPosition end = getPosition(params[1]);
+            ChessMove move;
+            if (params.length == 2) {
+                if (pawnPromotion(start, end, params.length)) {
+                    throw new ResponseException("Expected: move <STARTPOSITION> <ENDPOSITION> <PROMOTIONPIECE>\n");
+                }
+                move = new ChessMove(start, end, null);
+            } else {
+                if (pawnPromotion(start, end, params.length)) {
+                    move = new ChessMove(start, end, getPromoPiece(params[2]));
+                } else {
+                    throw new ResponseException("Expected: move <STARTPOSITION> <ENDPOSITION>\n");
+                }
+            }
             ws.makeMove(auth.authToken(), move);
             return "";
         }
         throw new ResponseException("Expected: move <STARTPOSITION> <ENDPOSITION>\n");
+    }
+
+    private ChessPiece.PieceType getPromoPiece(String param) throws ResponseException {
+        return switch (param) {
+            case "q" -> ChessPiece.PieceType.QUEEN;
+            case "r" -> ChessPiece.PieceType.ROOK;
+            case "n" -> ChessPiece.PieceType.KNIGHT;
+            case "b" -> ChessPiece.PieceType.BISHOP;
+            default -> throw new ResponseException("Error: invalid promotion piece\n");
+        };
+    }
+
+    private boolean pawnPromotion(ChessPosition start, ChessPosition end, Integer paramsLength) throws ResponseException {
+        if (!currentGame.game().getBoard().getPiece(start).getPieceType().equals(ChessPiece.PieceType.PAWN)) {
+            if (paramsLength == 2) {
+                return false;
+            }
+            throw new ResponseException("Expected: move <STARTPOSITION> <ENDPOSITION>\n");
+        }
+        ChessGame.TeamColor color = currentGame.game().getTeamTurn();
+        boolean whitePromo = color.equals(ChessGame.TeamColor.WHITE) && end.getRow() == 8;
+        boolean blackPromo = color.equals(ChessGame.TeamColor.BLACK) && end.getRow() == 1;
+        return whitePromo || blackPromo;
     }
 
     public String highlight(String... params) throws ResponseException {
