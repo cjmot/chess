@@ -32,6 +32,7 @@ public class ChessClient {
     public AuthData auth;
     private final ConcurrentHashMap<Integer, GameData> games;
     public GameData currentGame = null;
+    private boolean resigning = false;
 
 
     public ChessClient(String serverUrl, ServerMessageHandler messageHandler) {
@@ -52,6 +53,7 @@ public class ChessClient {
             }
             var params = Arrays.copyOfRange(tokens, 1, tokens.length);
             return switch (cmd) {
+                case "resign" -> resign(params);
                 case "quit" -> "Thank you for playing!";
                 case "register" -> register(params);
                 case "login" -> login(params);
@@ -62,7 +64,6 @@ public class ChessClient {
                 case "observe" -> observeGame(params);
                 case "redraw" -> redraw(params);
                 case "leave" -> leaveGame(params);
-                case "resign" -> resign(params);
                 case "move" -> move(params);
                 case "highlight" -> highlight(params);
                 default -> help();
@@ -257,8 +258,10 @@ public class ChessClient {
     public String resign(String... params) throws ResponseException {
         checkGameState("resign");
         if (params.length == 0) {
-            ws.resign(auth.authToken());
-            currentGame.setGameOver(true);
+            if (confirmResign()) {
+                ws.resign(auth.authToken());
+                currentGame.setGameOver(true);
+            }
             return "";
         }
         throw new ResponseException("Expected: resign\n");
@@ -285,6 +288,22 @@ public class ChessClient {
             return new GameUI(currentGame, color).printGame(position);
         }
         throw new ResponseException("Expected: highlight <POSITION>\n");
+    }
+
+    private boolean confirmResign() {
+        printPrompt();
+        System.out.print("Are you sure you want to resign? (y/n)");
+        printPrompt();
+
+        String ans = new Scanner(System.in).nextLine();
+        if (ans.equalsIgnoreCase("y") || ans.equalsIgnoreCase("yes")) {
+            return true;
+        } else if (ans.equalsIgnoreCase("n") || ans.equalsIgnoreCase("no")) {
+            return false;
+        } else {
+            System.out.println(RED + "press 'y' to resign, 'n' to cancel");
+            return confirmResign();
+        }
     }
 
     private ChessPosition getPosition(String position) throws ResponseException {
@@ -319,5 +338,17 @@ public class ChessClient {
         if (state != State.GAMESTATE) {
             throw new ResponseException("Cannot perform '" + action + "' while not in game\n");
         }
+    }
+
+    private void printPrompt() {
+        String stateString;
+        if (state.equals(ChessClient.State.SIGNEDOUT)) {
+            stateString = "[LOGGED_OUT]";
+        } else if (state.equals(ChessClient.State.SIGNEDIN)) {
+            stateString = "[LOGGED_IN]";
+        } else {
+            stateString = "[IN_GAME]";
+        }
+        System.out.print("\n" + RESET + stateString + ">>> " + BLUE);
     }
 }

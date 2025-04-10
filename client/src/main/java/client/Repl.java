@@ -24,9 +24,9 @@ public class Repl implements ServerMessageHandler {
         System.out.println("Welcome to chess! Sign in or register to start.");
         System.out.print(client.help());
 
-        Scanner scanner = new Scanner(System.in);
         String result = "";
         while (!result.equals("Thank you for playing!")) {
+            Scanner scanner = new Scanner(System.in);
             printPrompt();
             String line = scanner.nextLine();
 
